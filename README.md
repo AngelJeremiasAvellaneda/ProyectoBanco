@@ -15,6 +15,10 @@ El sistema está compuesto por dos partes independientes que se comunican entre 
 - **Frontend** — React 19 + Vite + Tailwind CSS
 - **Backend** — Spring Boot 3.3 + Spring Security + JPA
 
+- **Cuenta de prueba** 
+— angel123@gmail.com 
+— angel123
+
 La autenticación se delega completamente a **Supabase Auth**, que emite tokens JWT firmados con RS256. El backend valida esos tokens descargando las claves públicas del endpoint JWKS de Supabase.
 
 ---
