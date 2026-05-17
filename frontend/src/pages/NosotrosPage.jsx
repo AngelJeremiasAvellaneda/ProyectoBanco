@@ -16,26 +16,26 @@ const VALORES = [
 ];
 
 const HITOS = [
-  { year: '1998', title: 'Fundación', desc: 'BancoConfianza abre sus puertas en Lima con 3 agencias y 50 colaboradores.' },
-  { year: '2005', title: 'Expansión regional', desc: 'Llegamos a 10 regiones del Perú con 45 agencias y más de 500 colaboradores.' },
-  { year: '2012', title: 'Banca digital', desc: 'Lanzamos nuestra primera plataforma de banca en línea para personas y empresas.' },
-  { year: '2018', title: 'App móvil', desc: 'Nuestra aplicación móvil supera el millón de descargas en su primer año.' },
-  { year: '2022', title: '2 millones de clientes', desc: 'Alcanzamos los 2 millones de clientes activos a nivel nacional.' },
-  { year: '2026', title: 'Banca del futuro', desc: 'Lanzamos nuestra plataforma de IA para asesoría financiera personalizada.' },
+  { year: '1889', title: 'Fundación', desc: 'El BCP abre sus puertas en Lima como el primer banco del Perú, con el respaldo del Estado peruano.' },
+  { year: '1942', title: 'Expansión nacional', desc: 'El BCP consolida su presencia en todo el territorio peruano con más de 50 agencias.' },
+  { year: '1995', title: 'Privatización', desc: 'El Grupo Romero adquiere el BCP, iniciando una nueva etapa de modernización y crecimiento.' },
+  { year: '2007', title: 'Banca por Internet', desc: 'Lanzamos nuestra plataforma de banca en línea, pionera en el sistema financiero peruano.' },
+  { year: '2016', title: 'Yape', desc: 'Creamos Yape, la billetera digital que revoluciona los pagos móviles en el Perú.' },
+  { year: '2026', title: 'Banca del futuro', desc: 'Lanzamos nuestra plataforma de IA para asesoría financiera personalizada con más de 12 millones de clientes.' },
 ];
 
 const EQUIPO = [
-  { nombre: 'Dr. Roberto Vargas',   cargo: 'Gerente General',          iniciales: 'RV', color: 'from-blue-500 to-indigo-600' },
-  { nombre: 'Lic. Carmen Flores',   cargo: 'Gerente de Operaciones',   iniciales: 'CF', color: 'from-emerald-500 to-teal-600' },
-  { nombre: 'Ing. Luis Paredes',    cargo: 'Gerente de Tecnología',    iniciales: 'LP', color: 'from-violet-500 to-purple-600' },
-  { nombre: 'Dra. Sofía Ríos',      cargo: 'Gerente de Riesgos',       iniciales: 'SR', color: 'from-orange-500 to-amber-600' },
+  { nombre: 'Gianfranco Ferrari',   cargo: 'Gerente General BCP',      iniciales: 'GF', color: 'from-blue-500 to-indigo-600' },
+  { nombre: 'Álvaro Correa',        cargo: 'Gerente de Finanzas',      iniciales: 'AC', color: 'from-emerald-500 to-teal-600' },
+  { nombre: 'Diego Cavero',         cargo: 'Gerente de Banca Digital',  iniciales: 'DC', color: 'from-violet-500 to-purple-600' },
+  { nombre: 'Claudia Dávila',       cargo: 'Gerente de Riesgos',       iniciales: 'CD', color: 'from-orange-500 to-amber-600' },
 ];
 
 const PREMIOS = [
-  { year: '2025', premio: 'Mejor Banco Digital del Perú', entidad: 'Global Finance Magazine' },
-  { year: '2024', premio: 'Premio a la Inclusión Financiera', entidad: 'SBS del Perú' },
-  { year: '2023', premio: 'Mejor Experiencia de Cliente', entidad: 'Ipsos Perú' },
-  { year: '2022', premio: 'Banco más Sostenible', entidad: 'Euromoney' },
+  { year: '2025', premio: 'Mejor Banco del Perú', entidad: 'Global Finance Magazine' },
+  { year: '2024', premio: 'Mejor Banco Digital de América Latina', entidad: 'Euromoney' },
+  { year: '2023', premio: 'Premio a la Innovación Financiera', entidad: 'The Banker' },
+  { year: '2022', premio: 'Banco más Sostenible del Perú', entidad: 'Euromoney' },
 ];
 
 export default function NosotrosPage() {
@@ -51,9 +51,9 @@ export default function NosotrosPage() {
           <span className="inline-block bg-white/10 border border-white/20 text-blue-100 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full">
             Quiénes somos
           </span>
-          <h1 className="text-4xl sm:text-5xl font-black text-white">Más de 28 años<br />construyendo confianza</h1>
+          <h1 className="text-4xl sm:text-5xl font-black text-white">Más de 130 años<br />al servicio del Perú</h1>
           <p className="text-blue-100 max-w-xl mx-auto">
-            Somos una institución financiera peruana comprometida con el desarrollo económico y la inclusión financiera.
+            Somos el banco líder del Perú, comprometidos con el desarrollo económico y la inclusión financiera de todos los peruanos.
           </p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function NosotrosPage() {
             </div>
             <h2 className="text-theme font-black text-xl mb-3">Nuestra Misión</h2>
             <p className="text-theme-muted leading-relaxed">
-              Brindar servicios financieros accesibles, innovadores y de calidad que contribuyan al desarrollo económico de los microempresarios y familias peruanas, promoviendo la inclusión financiera en todo el territorio nacional.
+              Promover el desarrollo sostenible y la inclusión financiera en el Perú, ofreciendo soluciones financieras innovadoras, accesibles y de calidad que generen valor para nuestros clientes, colaboradores, accionistas y la sociedad.
             </p>
           </div>
           <div className="bg-theme-card border border-theme rounded-2xl p-8 shadow-card">
@@ -76,7 +76,7 @@ export default function NosotrosPage() {
             </div>
             <h2 className="text-theme font-black text-xl mb-3">Nuestra Visión</h2>
             <p className="text-theme-muted leading-relaxed">
-              Ser el banco digital líder del Perú al 2030, reconocido por su innovación tecnológica, excelencia en el servicio al cliente y su contribución al desarrollo sostenible del país.
+              Ser el banco más valorado del Perú al 2030, reconocido por transformar la vida de nuestros clientes a través de soluciones financieras digitales, con presencia en toda América Latina.
             </p>
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function NosotrosPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-black text-theme">Presencia nacional</h2>
-            <p className="text-theme-muted text-sm mt-2">180+ agencias en 25 regiones del Perú</p>
+            <p className="text-theme-muted text-sm mt-2">450+ agencias en 25 regiones del Perú</p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {['Lima', 'Arequipa', 'Cusco', 'Trujillo', 'Piura', 'Chiclayo', 'Iquitos', 'Huancayo', 'Puno', 'Tacna'].map((ciudad) => (

@@ -1,82 +1,52 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  Landmark, LogOut, Bell, Settings, CreditCard, TrendingUp,
-  ArrowUpRight, ArrowDownLeft, Wallet, PiggyBank,
-  Send, QrCode, Receipt, RefreshCw, ChevronRight, Eye, EyeOff,
-  Home, History, User, Shield, Zap, Sun, Moon, BarChart3,
+  ArrowLeftRight, Send, CreditCard, Droplets, RefreshCw,
+  Home, Globe, LogOut, Sun, Moon, Bell,
+  Smartphone, History, PackageOpen, Star,
+  ChevronRight, Eye, EyeOff, Menu, X,
+  LayoutDashboard, User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { BcpLogo } from '../components/Navbar';
 
-/* ─── Datos de demo (se reemplazarán con llamadas al backend) ─── */
-const ACCOUNTS = [
-  { id: 1, type: 'Cuenta de Ahorros', number: '•••• •••• 4821', balance: 3450.00, currency: 'S/', grad: 'from-indigo-500 via-purple-600 to-violet-700', icon: PiggyBank, tasa: '4.5% TEA' },
-  { id: 2, type: 'Cuenta Corriente',  number: '•••• •••• 7293', balance: 1200.50, currency: 'S/', grad: 'from-emerald-500 via-teal-500 to-cyan-600',    icon: Wallet,   tasa: 'Sin costo' },
-];
-
-const TRANSACTIONS = [
-  { id: 1, desc: 'Transferencia recibida', sub: 'De: Carlos Mendoza', amount: +1500,   date: 'Hoy, 10:32',    type: 'in',  icon: ArrowDownLeft, color: 'from-emerald-400 to-teal-500' },
-  { id: 2, desc: 'Pago de servicios',      sub: 'Luz del Sur',        amount: -185.40, date: 'Hoy, 08:15',    type: 'out', icon: Receipt,       color: 'from-orange-400 to-amber-500' },
-  { id: 3, desc: 'Transferencia enviada',  sub: 'A: María Torres',    amount: -500,    date: 'Ayer, 16:45',   type: 'out', icon: ArrowUpRight,  color: 'from-red-400 to-rose-500' },
-  { id: 4, desc: 'Depósito en efectivo',   sub: 'Agencia Miraflores', amount: +2000,   date: 'Ayer, 11:20',   type: 'in',  icon: ArrowDownLeft, color: 'from-blue-400 to-indigo-500' },
-  { id: 5, desc: 'Pago de crédito',        sub: 'Cuota mensual MYPE', amount: -650,    date: '12 May, 09:00', type: 'out', icon: CreditCard,    color: 'from-violet-400 to-purple-500' },
-  { id: 6, desc: 'Intereses acreditados',  sub: 'Cuenta de Ahorros',  amount: +32.80,  date: '10 May, 00:00', type: 'in',  icon: TrendingUp,    color: 'from-emerald-400 to-green-500' },
-];
-
-const QUICK_ACTIONS = [
-  { label: 'Transferir', icon: Send,      bgFrom: '#3b82f6', bgTo: '#4f46e5', sub: 'Envía dinero' },
-  { label: 'Pagar',      icon: QrCode,    bgFrom: '#7c3aed', bgTo: '#6d28d9', sub: 'Servicios' },
-  { label: 'Historial',  icon: History,   bgFrom: '#059669', bgTo: '#0d9488', sub: 'Movimientos' },
-  { label: 'Recargar',   icon: RefreshCw, bgFrom: '#d97706', bgTo: '#ea580c', sub: 'Saldo' },
-];
-
+/* ══════════════════════════════════════════
+   NAVEGACIÓN DEL DASHBOARD
+══════════════════════════════════════════ */
 const NAV_ITEMS = [
-  { label: 'Inicio',      icon: Home,      id: 'home' },
-  { label: 'Movimientos', icon: History,   id: 'movimientos' },
-  { label: 'Transferir',  icon: Send,      id: 'transferir' },
-  { label: 'Inversiones', icon: BarChart3, id: 'inversiones' },
-  { label: 'Perfil',      icon: User,      id: 'perfil' },
+  { label: 'Inicio',      Icon: Home,           id: 'home',        to: '/dashboard'   },
+  { label: 'Operaciones', Icon: ArrowLeftRight,  id: 'operaciones', to: '/operaciones' },
+  { label: 'Explora',     Icon: Globe,           id: 'explora',     to: '/explora'     },
 ];
 
-/* ─── Quick Action Card ─── */
-function QuickActionCard({ label, icon: Icon, bgFrom, bgTo, sub, onClick }) {
-  return (
-    <button onClick={onClick}
-      className="group relative cursor-pointer select-none"
-      style={{ paddingTop: 28 }}>
-      <div className="absolute right-4 top-0 w-14 h-14 z-20 pointer-events-none"
-        style={{ filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.35))' }}>
-        <div className="w-full h-full rounded-2xl flex items-center justify-center animate-float group-hover:scale-110 transition-transform duration-300"
-          style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))', border: '1px solid rgba(255,255,255,0.25)' }}>
-          <Icon size={22} className="text-white drop-shadow" />
-        </div>
-      </div>
-      <div className="relative rounded-2xl overflow-hidden h-24 transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-float"
-        style={{ background: `linear-gradient(135deg, ${bgFrom}, ${bgTo})` }}>
-        <div className="absolute -top-5 -right-5 w-16 h-16 rounded-full bg-white/10 pointer-events-none" />
-        <div className="absolute bottom-3 left-4">
-          <p className="text-white font-bold text-sm leading-tight">{label}</p>
-          <p className="text-white/60 text-xs">{sub}</p>
-        </div>
-      </div>
-    </button>
-  );
-}
+/* Acciones rápidas — cada una navega a su ruta ComingSoon */
+const QUICK_ACTIONS = [
+  { label: 'Transferir\ndinero',  Icon: ArrowLeftRight, color: '#0052FF', bg: 'rgba(0,82,255,0.08)',   to: '/transferir'     },
+  { label: 'Yapear\na celular',   Icon: Smartphone,     color: '#7c3aed', bg: 'rgba(124,58,237,0.08)', to: '/yapear'         },
+  { label: 'Pagar\ntarjetas',     Icon: CreditCard,     color: '#0052FF', bg: 'rgba(0,82,255,0.08)',   to: '/pagar-tarjetas' },
+  { label: 'Pagar\nservicios',    Icon: Droplets,       color: '#0052FF', bg: 'rgba(0,82,255,0.08)',   to: '/pagar-servicios'},
+  { label: 'Tipo de\ncambio',     Icon: RefreshCw,      color: '#059669', bg: 'rgba(5,150,105,0.08)',  to: '/tipo-cambio-dashboard' },
+  { label: 'Historial',           Icon: History,        color: '#F47920', bg: 'rgba(244,121,32,0.08)', to: '/historial'      },
+];
 
-/* ─── Main ─── */
-export default function DashboardPage() {
+/* ══════════════════════════════════════════
+   NAVBAR DEL DASHBOARD
+══════════════════════════════════════════ */
+function DashboardNav({ activeId, onNavigate }) {
   const navigate = useNavigate();
-  const { sesion, salir } = useAuth();
   const { dark, toggle } = useTheme();
-  const [showBalance, setShowBalance]   = useState(true);
-  const [activeAccount, setActiveAccount] = useState(0);
-  const [activeNav, setActiveNav]       = useState('home');
-  const [selectedTx, setSelectedTx]     = useState(TRANSACTIONS[0]);
+  const { sesion, salir } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
 
   const usuario = sesion?.usuario;
-  const account = ACCOUNTS[activeAccount];
-  const fmt = (n) => n.toLocaleString('es-PE', { minimumFractionDigits: 2 });
+
+  const navBg    = dark ? 'rgba(13,17,23,0.97)'  : 'rgba(255,255,255,0.97)';
+  const border   = dark ? '#1F2630'               : '#e5e7eb';
+  const textMain = dark ? '#E6EDF3'               : '#003087';
+  const textMuted= dark ? '#8B9498'               : '#6b7280';
+  const hoverBg  = dark ? 'rgba(0,82,255,0.12)'   : '#f0f4ff';
 
   async function handleLogout() {
     await salir();
@@ -84,263 +54,399 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-theme text-theme flex overflow-hidden">
+    <>
+      <div className="fixed top-0 left-0 right-0 z-50"
+        style={{ background: navBg, borderBottom: `1px solid ${border}`, boxShadow: dark ? '0 1px 0 rgba(255,255,255,.04)' : '0 1px 8px rgba(0,0,0,.06)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-4">
 
-      {/* ══ SIDEBAR ══ */}
-      <aside className="hidden lg:flex flex-col items-center w-18 bg-sidebar py-6 fixed h-full z-40 gap-2">
-        <Link to="/" className="w-10 h-10 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mb-6 shadow-glow hover-scale">
-          <Landmark size={18} className="text-white" />
-        </Link>
+          <BcpLogo textColor={dark ? '#E6EDF3' : '#003087'} />
 
-        <nav className="flex-1 flex flex-col gap-1 w-full px-3">
-          {NAV_ITEMS.map(({ icon: Icon, id, label }) => (
-            <button key={id} onClick={() => setActiveNav(id)} title={label}
-              className={`group relative w-full h-11 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                activeNav === id ? 'sidebar-active text-sidebar-active' : 'text-sidebar hover:text-sidebar-active'
-              }`}>
-              <Icon size={19} />
-              {activeNav === id && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-(--color-primary) rounded-r-full" />
-              )}
-              <span className="absolute left-14 bg-sidebar text-sidebar-active text-xs font-semibold px-2.5 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity shadow-lg border border-white/10 z-50">
-                {label}
-              </span>
+          {/* Badge "Mi Banca" */}
+          <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+            style={{ background: dark ? 'rgba(0,82,255,0.15)' : '#eef3ff', color: '#0052FF' }}>
+            <LayoutDashboard size={11} /> Mi Banca
+          </span>
+
+          {/* Nav items desktop */}
+          <nav className="hidden md:flex items-center gap-1 flex-1">
+            {NAV_ITEMS.map(({ label, Icon, id, to }) => {
+              const active = id === activeId;
+              return (
+                <button key={id}
+                  onClick={() => navigate(to)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all"
+                  style={{
+                    color: active ? '#F47920' : textMuted,
+                    background: active ? (dark ? 'rgba(244,121,32,0.1)' : '#fff5ee') : 'transparent',
+                    borderBottom: active ? '2px solid #F47920' : '2px solid transparent',
+                  }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = '#0052FF'; } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = textMuted; } }}>
+                  <Icon size={15} />
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Acciones derecha */}
+          <div className="flex items-center gap-2 ml-auto">
+            {/* Notificaciones */}
+            <button className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{ color: textMuted }}
+              onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <Bell size={17} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
             </button>
-          ))}
-        </nav>
 
-        <div className="flex flex-col gap-1 w-full px-3">
-          <button onClick={toggle} title={dark ? 'Tema claro' : 'Tema oscuro'}
-            className="w-full h-11 rounded-xl flex items-center justify-center text-sidebar hover:text-sidebar-active transition-all">
-            {dark ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
-          </button>
-          <button title="Configuración"
-            className="w-full h-11 rounded-xl flex items-center justify-center text-sidebar hover:text-sidebar-active transition-all">
-            <Settings size={18} />
-          </button>
-          <button onClick={handleLogout} title="Cerrar sesión"
-            className="w-full h-11 rounded-xl flex items-center justify-center text-red-400/60 hover:text-red-400 hover:bg-red-500/10 transition-all">
-            <LogOut size={18} />
-          </button>
-        </div>
-      </aside>
+            {/* Toggle tema */}
+            <button onClick={toggle}
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{ color: textMuted }}
+              onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              {dark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+            </button>
 
-      {/* ══ MAIN ══ */}
-      <main className="flex-1 lg:ml-18 flex min-h-screen overflow-hidden">
-
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-
-          {/* Topbar */}
-          <header className="sticky top-0 z-20 bg-theme-nav backdrop-blur-xl border-b border-theme px-6 py-3.5 flex items-center justify-between">
-            <div>
-              <p className="text-theme-soft text-xs">Bienvenido de vuelta 👋</p>
-              <h1 className="text-theme font-bold text-base">
-                {usuario?.name || usuario?.email?.split('@')[0] || 'Usuario'}
-              </h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={toggle}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-theme-muted hover:bg-theme-alt transition-all">
-                {dark ? <Sun size={16} className="text-amber-400" /> : <Moon size={16} />}
+            {/* Avatar / menú usuario */}
+            <div className="relative" data-user-menu>
+              <button onClick={() => setUserMenu(v => !v)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold transition-all border"
+                style={{ borderColor: dark ? '#0052FF' : '#003087', color: dark ? '#4D9FFF' : '#003087', background: 'transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                  style={{ background: 'linear-gradient(135deg,#0052FF,#0066cc)' }}>
+                  {(usuario?.name || usuario?.email || 'U')[0].toUpperCase()}
+                </div>
+                <span className="max-w-24 truncate hidden sm:block">
+                  {usuario?.name || usuario?.email?.split('@')[0]}
+                </span>
               </button>
-              <button className="relative w-8 h-8 bg-theme-alt rounded-xl flex items-center justify-center hover:bg-theme-card transition-all">
-                <Bell size={15} className="text-theme-muted" />
-                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-(--color-primary) rounded-full animate-pulse" />
-              </button>
-              <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-glow">
-                {(usuario?.name || usuario?.email || 'U')[0].toUpperCase()}
-              </div>
-            </div>
-          </header>
 
-          <div className="flex-1 p-5 space-y-6">
-
-            {/* ── BALANCE CARD ── */}
-            <div className={`relative bg-linear-to-br ${account.grad} rounded-3xl p-6 overflow-hidden shadow-float`}>
-              <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full" />
-              <div className="absolute -bottom-14 -left-8 w-56 h-56 bg-black/10 rounded-full" />
-              <div className="relative">
-                {/* Tabs de cuentas */}
-                <div className="flex gap-2 mb-5 flex-wrap">
-                  {ACCOUNTS.map((acc, i) => (
-                    <button key={acc.id} onClick={() => setActiveAccount(i)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                        activeAccount === i
-                          ? 'bg-white/25 text-white border border-white/40'
-                          : 'bg-white/8 text-white/60 hover:bg-white/15 border border-transparent'
-                      }`}>
-                      <acc.icon size={12} />
-                      {acc.type}
+              {userMenu && (
+                <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl shadow-xl overflow-hidden z-50 border"
+                  style={{ background: dark ? '#1A1F27' : '#ffffff', borderColor: border }}>
+                  <div className="px-4 py-3" style={{ borderBottom: `1px solid ${border}` }}>
+                    <p className="text-sm font-semibold truncate" style={{ color: textMain }}>
+                      {usuario?.name || usuario?.email?.split('@')[0]}
+                    </p>
+                    <p className="text-xs truncate" style={{ color: textMuted }}>{usuario?.email}</p>
+                  </div>
+                  <div className="p-1.5 space-y-0.5">
+                    <button onClick={() => { navigate('/dashboard'); setUserMenu(false); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors text-left"
+                      style={{ color: textMain }}
+                      onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <User size={15} style={{ color: textMuted }} /> Mi perfil
                     </button>
-                  ))}
-                </div>
-
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-white/60 text-xs mb-1">Saldo disponible</p>
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-4xl font-black text-white tracking-tight">
-                        {showBalance ? `S/ ${fmt(account.balance)}` : 'S/ ••••••'}
-                      </span>
-                      <button onClick={() => setShowBalance(v => !v)}
-                        className="text-white/50 hover:text-white transition-colors">
-                        {showBalance ? <EyeOff size={17} /> : <Eye size={17} />}
-                      </button>
-                    </div>
-                    <p className="text-white/50 text-xs mt-1 font-mono">{account.number}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1.5 mb-2">
-                      <TrendingUp size={12} className="text-white" />
-                      <span className="text-white text-xs font-semibold">+2.4%</span>
-                    </div>
-                    <p className="text-white/50 text-xs">{account.tasa}</p>
+                    <div style={{ borderTop: `1px solid ${border}`, margin: '4px 0' }} />
+                    <button onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-500 transition-colors text-left"
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,77,79,0.1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <LogOut size={15} /> Cerrar sesión
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex gap-6 mt-5 pt-4 border-t border-white/15">
-                  {[['Ingresos', '+S/ 3,532'], ['Gastos', '-S/ 1,335'], ['Crédito', 'S/ 8,000']].map(([l, v]) => (
-                    <div key={l}>
-                      <p className="text-white/50 text-xs">{l}</p>
-                      <p className="text-white font-bold text-sm">{v}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* ── ACCIONES RÁPIDAS ── */}
-            <div>
-              <p className="text-theme-soft text-xs font-semibold uppercase tracking-widest mb-3">Acciones rápidas</p>
-              <div className="grid grid-cols-4 gap-3 pt-8 overflow-visible">
-                {QUICK_ACTIONS.map(props => (
-                  <QuickActionCard key={props.label} {...props} />
-                ))}
-              </div>
-            </div>
-
-            {/* ── MOVIMIENTOS ── */}
-            <div className="bg-theme-card border border-theme rounded-2xl overflow-hidden shadow-card">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-theme">
-                <h3 className="text-theme font-bold text-sm">Últimos movimientos</h3>
-                <button className="flex items-center gap-1 text-primary text-xs font-semibold hover:underline">
-                  Ver todos <ChevronRight size={13} />
-                </button>
-              </div>
-              <div className="divide-y divide-(--color-border)">
-                {TRANSACTIONS.map((tx) => (
-                  <button key={tx.id} onClick={() => setSelectedTx(tx)}
-                    className={`w-full flex items-center gap-3.5 px-5 py-3.5 hover:bg-theme-alt transition-all text-left ${
-                      selectedTx?.id === tx.id ? 'bg-primary-lt' : ''
-                    }`}>
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-linear-to-br ${tx.color} shadow-md`}>
-                      <tx.icon size={15} className="text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-theme text-sm font-medium truncate">{tx.desc}</p>
-                      <p className="text-theme-soft text-xs">{tx.sub}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className={`font-bold text-sm ${tx.type === 'in' ? 'text-success' : 'text-danger'}`}>
-                        {tx.type === 'in' ? '+' : ''}S/ {Math.abs(tx.amount).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-theme-soft text-xs">{tx.date}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
+            {/* Hamburguesa móvil */}
+            <button onClick={() => setMobileOpen(v => !v)}
+              className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+              style={{ color: textMain }}
+              onMouseEnter={e => e.currentTarget.style.background = hoverBg}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
 
-        {/* ══ PANEL DERECHO — detalle de movimiento ══ */}
-        <aside className="hidden xl:flex flex-col w-72 bg-theme-card border-l border-theme overflow-y-auto">
-          <div className="p-5 border-b border-theme">
-            <p className="text-theme-soft text-xs font-semibold uppercase tracking-widest mb-1">Detalle</p>
-            <h2 className="text-theme font-bold text-sm">Movimiento seleccionado</h2>
+        {/* Menú móvil */}
+        <div className={`md:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="px-4 py-3 space-y-1" style={{ borderTop: `1px solid ${border}`, background: navBg }}>
+            {NAV_ITEMS.map(({ label, Icon, id, to }) => (
+              <button key={id} onClick={() => { navigate(to); setMobileOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                style={{
+                  color: id === activeId ? '#F47920' : textMuted,
+                  background: id === activeId ? (dark ? 'rgba(244,121,32,0.1)' : '#fff5ee') : 'transparent',
+                }}>
+                <Icon size={16} /> {label}
+              </button>
+            ))}
+            <div style={{ borderTop: `1px solid ${border}`, paddingTop: 8, marginTop: 4 }}>
+              <button onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 text-left">
+                <LogOut size={15} /> Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spacer */}
+      <div style={{ height: 56 }} />
+    </>
+  );
+}
+
+/* ══════════════════════════════════════════
+   TARJETA DE ACCIÓN RÁPIDA
+══════════════════════════════════════════ */
+function QuickCard({ label, Icon, color, bg, to }) {
+  const navigate = useNavigate();
+  const { dark } = useTheme();
+  const cardBg = dark ? '#1A1F27' : '#ffffff';
+  const border = dark ? '#1F2630' : '#e5e7eb';
+
+  return (
+    <button onClick={() => navigate(to)}
+      className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border transition-all hover:scale-[1.03] hover:shadow-md text-center"
+      style={{ borderColor: border, background: cardBg }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.background = bg; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = border; e.currentTarget.style.background = cardBg; }}>
+      <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: bg }}>
+        <Icon size={20} style={{ color }} />
+      </div>
+      <span className="text-xs font-semibold leading-tight whitespace-pre-line"
+        style={{ color: dark ? '#E6EDF3' : '#374151' }}>
+        {label}
+      </span>
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════
+   ESTADO VACÍO GENÉRICO
+══════════════════════════════════════════ */
+function EmptyState({ icon: Icon, title, subtitle }) {
+  const { dark } = useTheme();
+  const textH  = dark ? '#E6EDF3' : '#374151';
+  const textM  = dark ? '#8B9498' : '#9ca3af';
+  const iconBg = dark ? 'rgba(255,255,255,0.05)' : '#f3f4f6';
+
+  return (
+    <div className="flex flex-col items-center justify-center py-10 px-6 text-center gap-3">
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: iconBg }}>
+        <Icon size={26} style={{ color: textM }} strokeWidth={1.5} />
+      </div>
+      <p className="text-sm font-semibold" style={{ color: textH }}>{title}</p>
+      <p className="text-xs leading-relaxed max-w-xs" style={{ color: textM }}>{subtitle}</p>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   TARJETA DE SALDO (cuenta)
+══════════════════════════════════════════ */
+function BalanceCard({ cuenta }) {
+  const { dark } = useTheme();
+  const [visible, setVisible] = useState(false);
+
+  const cardBg = dark ? '#1A1F27' : '#ffffff';
+  const border = dark ? '#1F2630' : '#e5e7eb';
+  const textH  = dark ? '#E6EDF3' : '#003087';
+  const textM  = dark ? '#8B9498' : '#6b7280';
+
+  const saldo = visible
+    ? `S/ ${Number(cuenta.saldo ?? 0).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`
+    : 'S/ ••••••';
+
+  return (
+    <div className="rounded-2xl border p-5 flex flex-col gap-3"
+      style={{ background: cardBg, borderColor: border }}>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#F47920' }}>
+            {cuenta.tipo_cuenta || 'Cuenta'}
+          </p>
+          <p className="text-xs mt-0.5 font-mono" style={{ color: textM }}>
+            {cuenta.numero_cuenta}
+          </p>
+        </div>
+        <button onClick={() => setVisible(v => !v)}
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+          style={{ color: textM }}
+          onMouseEnter={e => e.currentTarget.style.background = dark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+
+      {/* Saldo */}
+      <div>
+        <p className="text-xs mb-1" style={{ color: textM }}>Saldo disponible</p>
+        <p className="text-2xl font-black tracking-tight" style={{ color: textH }}>{saldo}</p>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-1" style={{ borderTop: `1px solid ${border}` }}>
+        <span className="text-xs px-2 py-0.5 rounded-full font-semibold"
+          style={{ background: dark ? 'rgba(5,150,105,0.15)' : '#d1fae5', color: '#059669' }}>
+          Activa
+        </span>
+        <button className="flex items-center gap-1 text-xs font-semibold transition-colors"
+          style={{ color: '#0052FF' }}
+          onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+          onMouseLeave={e => e.currentTarget.style.color = '#0052FF'}>
+          Ver detalle <ChevronRight size={12} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   PÁGINA PRINCIPAL
+══════════════════════════════════════════ */
+export default function DashboardPage() {
+  const { sesion } = useAuth();
+  const { dark } = useTheme();
+
+  const usuario  = sesion?.usuario;
+  const cuentas  = usuario?.cuentas  ?? [];
+  const favoritos= usuario?.favoritos ?? [];
+  const movimientos = usuario?.movimientos ?? [];
+
+  /* Tokens de color */
+  const pageBg  = dark ? '#0D1117'  : '#f0f4ff';
+  const cardBg  = dark ? '#1A1F27'  : '#ffffff';
+  const border  = dark ? '#1F2630'  : '#e5e7eb';
+  const textH   = dark ? '#E6EDF3'  : '#003087';
+  const textM   = dark ? '#8B9498'  : '#6b7280';
+
+  const nombre = usuario?.name || usuario?.email?.split('@')[0] || 'Usuario';
+  const hora   = new Date().getHours();
+  const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+
+  return (
+    <div style={{ background: pageBg, minHeight: '100vh' }}>
+      <DashboardNav activeId="home" />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+        {/* ── Saludo ── */}
+        <div>
+          <h1 className="text-2xl font-black" style={{ color: textH }}>
+            {saludo}, {nombre} 👋
+          </h1>
+          <p className="text-sm mt-1" style={{ color: textM }}>
+            Aquí tienes un resumen de tus finanzas.
+          </p>
+        </div>
+
+        {/* ── Acciones rápidas ── */}
+        <section>
+          <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: textM }}>
+            Acciones rápidas
+          </h2>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            {QUICK_ACTIONS.map(a => <QuickCard key={a.to} {...a} />)}
+          </div>
+        </section>
+
+        {/* ── Mis cuentas ── */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold uppercase tracking-widest" style={{ color: textM }}>
+              Mis cuentas
+            </h2>
           </div>
 
-          {selectedTx && (
-            <div className="p-5 space-y-4 animate-fade-in" key={selectedTx.id}>
-              <div className="flex flex-col items-center text-center py-3">
-                <div className={`w-14 h-14 rounded-2xl bg-linear-to-br ${selectedTx.color} flex items-center justify-center shadow-float mb-3`}>
-                  <selectedTx.icon size={24} className="text-white" />
-                </div>
-                <p className={`text-3xl font-black ${selectedTx.type === 'in' ? 'text-success' : 'text-danger'}`}>
-                  {selectedTx.type === 'in' ? '+' : ''}S/ {Math.abs(selectedTx.amount).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                </p>
-                <p className="text-theme font-semibold text-sm mt-1">{selectedTx.desc}</p>
-                <p className="text-theme-soft text-xs mt-0.5">{selectedTx.sub}</p>
-              </div>
-
-              <div className="bg-theme rounded-2xl p-4 space-y-3">
-                {[
-                  { label: 'Fecha',  value: selectedTx.date },
-                  { label: 'Tipo',   value: selectedTx.type === 'in' ? 'Ingreso' : 'Egreso' },
-                  { label: 'Estado', value: 'Completado' },
-                  { label: 'Ref.',   value: `#TXN-${String(selectedTx.id).padStart(6, '0')}` },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex justify-between items-center">
-                    <span className="text-theme-soft text-xs">{label}</span>
-                    <span className="text-theme text-xs font-semibold">{value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-2 bg-success-lt rounded-xl px-4 py-3">
-                <div className="w-2 h-2 bg-(--color-success) rounded-full animate-pulse" />
-                <span className="text-success text-xs font-semibold">Transacción completada</span>
-              </div>
-
-              <div className="space-y-2">
-                <button className="w-full bg-primary-lt text-primary py-2.5 rounded-xl text-xs font-semibold hover:bg-(--color-primary) hover:text-white transition-all">
-                  Descargar comprobante
-                </button>
-                <button className="w-full border border-theme text-theme-muted py-2.5 rounded-xl text-xs font-semibold hover:border-(--color-primary) hover:text-primary transition-all">
-                  Reportar problema
-                </button>
-              </div>
+          {cuentas.length === 0 ? (
+            <div className="rounded-2xl border" style={{ background: cardBg, borderColor: border }}>
+              <EmptyState
+                icon={PackageOpen}
+                title="Aún no tienes productos"
+                subtitle="Cuando tengas cuentas o tarjetas activas, aparecerán aquí."
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {cuentas.map(c => <BalanceCard key={c.id} cuenta={c} />)}
             </div>
           )}
+        </section>
 
-          {/* Sesión segura */}
-          <div className="mx-5 mb-5 mt-auto">
-            <div className="bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl p-4 relative overflow-hidden">
-              <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
-              <div className="relative">
-                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center mb-3">
-                  <Shield size={16} className="text-white" />
-                </div>
-                <p className="text-white font-bold text-sm">Sesión segura</p>
-                <p className="text-white/60 text-xs mt-0.5">SSL 256-bit activo</p>
-                <div className="flex items-center gap-1.5 mt-2">
-                  <Zap size={11} className="text-emerald-300" />
-                  <span className="text-emerald-300 text-xs font-semibold">Protegido</span>
-                </div>
-              </div>
+        {/* ── Dos columnas: Favoritos + Últimos movimientos ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Favoritos */}
+          <section>
+            <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: textM }}>
+              Favoritos
+            </h2>
+            <div className="rounded-2xl border" style={{ background: cardBg, borderColor: border }}>
+              {favoritos.length === 0 ? (
+                <EmptyState
+                  icon={Star}
+                  title="Sin favoritos aún"
+                  subtitle="Agrega contactos o cuentas frecuentes para transferir más rápido."
+                />
+              ) : (
+                <ul className="divide-y" style={{ borderColor: border }}>
+                  {favoritos.map((f, i) => (
+                    <li key={i} className="flex items-center gap-3 px-5 py-3">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                        style={{ background: 'linear-gradient(135deg,#0052FF,#0066cc)' }}>
+                        {f.nombre?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: textH }}>{f.nombre}</p>
+                        <p className="text-xs truncate" style={{ color: textM }}>{f.banco}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          </div>
-        </aside>
-      </main>
+          </section>
 
-      {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-theme-card/95 backdrop-blur-xl border-t border-theme flex z-40">
-        {NAV_ITEMS.map(({ label, icon: Icon, id }) => (
-          <button key={id} onClick={() => setActiveNav(id)}
-            className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-              activeNav === id ? 'text-primary' : 'text-theme-soft'
-            }`}>
-            <Icon size={19} />
-            {label}
-          </button>
-        ))}
-        <button onClick={handleLogout}
-          className="flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium text-danger">
-          <LogOut size={19} />
-          Salir
-        </button>
-      </nav>
+          {/* Últimos movimientos */}
+          <section>
+            <h2 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: textM }}>
+              Últimos movimientos
+            </h2>
+            <div className="rounded-2xl border" style={{ background: cardBg, borderColor: border }}>
+              {movimientos.length === 0 ? (
+                <EmptyState
+                  icon={History}
+                  title="Sin movimientos"
+                  subtitle="Tus transacciones recientes aparecerán aquí una vez que operes."
+                />
+              ) : (
+                <ul className="divide-y" style={{ borderColor: border }}>
+                  {movimientos.map((m, i) => {
+                    const esDebito = m.tipo === 'DEBITO';
+                    return (
+                      <li key={i} className="flex items-center gap-3 px-5 py-3">
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                          style={{ background: esDebito ? 'rgba(239,68,68,0.1)' : 'rgba(5,150,105,0.1)' }}>
+                          <Send size={15} style={{ color: esDebito ? '#ef4444' : '#059669' }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: textH }}>{m.descripcion}</p>
+                          <p className="text-xs" style={{ color: textM }}>{m.fecha}</p>
+                        </div>
+                        <span className="text-sm font-bold shrink-0"
+                          style={{ color: esDebito ? '#ef4444' : '#059669' }}>
+                          {esDebito ? '-' : '+'}S/ {Number(m.monto).toFixed(2)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+
+      </main>
     </div>
   );
 }

@@ -1,462 +1,813 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
-  Landmark, Mail, Lock, Eye, EyeOff, ArrowLeft,
-  AlertCircle, Loader2, Sun, Moon, CheckCircle,
-  Shield, Zap, TrendingUp, CreditCard, PiggyBank,
-  Smartphone, Star, ArrowRight
+  Eye, EyeOff, AlertCircle, Loader2,
+  Sun, Moon, HelpCircle, Clock, ChevronDown,
+  Shield, CreditCard,
+  Zap, TrendingUp, PiggyBank, Smartphone,
+  ArrowLeft, RefreshCw, Landmark, Mail, KeyRound,
+  CheckCircle2
 } from 'lucide-react';
 import { login } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { BcpLogo } from '../components/Navbar';
 
-/* ── Floating feature chips (left panel) ── */
-const FEATURES = [
-  { icon: Zap,        label: 'Transferencias al instante',  color: 'from-blue-400 to-indigo-500',   delay: '0s'   },
-  { icon: Shield,     label: 'Seguridad SSL 256-bit',        color: 'from-emerald-400 to-teal-500',  delay: '0.4s' },
-  { icon: TrendingUp, label: 'Hasta 8.2% TEA en ahorros',   color: 'from-violet-400 to-purple-500', delay: '0.8s' },
-  { icon: Smartphone, label: 'Banca móvil 24/7',             color: 'from-orange-400 to-amber-500',  delay: '1.2s' },
-];
+const SESSION_TIMEOUT = 300;
+const DOC_TYPES = ['DNI', 'CE', 'Pasaporte', 'RUC'];
 
-/* ── Decorative floating cards (left panel) ── */
-function FloatingCard({ icon: Icon, label, value, color, style }) {
+/* ─────────────────────────────────────────────
+   PANEL IZQUIERDO
+───────────────────────────────────────────── */
+function LeftPanel() {
+  const [imgError, setImgError] = useState(false);
+
   return (
-    <div
-      className="absolute glass-card rounded-2xl px-4 py-3 flex items-center gap-3 animate-float pointer-events-none"
-      style={style}
-    >
-      <div className={`w-9 h-9 rounded-xl bg-linear-to-br ${color} flex items-center justify-center shrink-0 shadow-lg`}>
-        <Icon size={17} className="text-white" />
+    <div className="hidden lg:flex flex-col w-[42%] shrink-0 relative overflow-hidden select-none"
+      style={{ background: 'linear-gradient(160deg,#001a4d 0%,#003087 50%,#0052cc 100%)' }}>
+
+      {/* Patrón de puntos */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+        }} />
+
+      {/* Blob glow superior izq */}
+      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(0,120,255,0.28) 0%, transparent 65%)' }} />
+      {/* Blob glow inferior der */}
+      <div className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(244,121,32,0.20) 0%, transparent 65%)' }} />
+      {/* Blob glow centro */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full pointer-events-none animate-pulse-slow"
+        style={{ background: 'radial-gradient(circle, rgba(0,82,255,0.12) 0%, transparent 70%)' }} />
+
+      {/* Logo */}
+      <div className="relative z-10 px-8 pt-7 pb-0 flex items-center gap-3 shrink-0">
+        <BcpLogo textColor="white" />
+        <div className="h-5 w-px bg-white/20" />
+        <span className="text-white/60 text-xs font-medium tracking-wide">Banco de Crédito del Perú</span>
       </div>
-      <div>
-        <p className="text-white font-bold text-sm leading-tight">{value}</p>
-        <p className="text-white/55 text-xs">{label}</p>
-      </div>
-    </div>
-  );
-}
 
-/* ── SVG illustration — bank building with coins ── */
-function BankIllustration() {
-  return (
-    <div className="relative w-72 h-72 mx-auto">
-      {/* Main building */}
-      <svg viewBox="0 0 280 280" className="w-full h-full drop-shadow-2xl" xmlns="http://www.w3.org/2000/svg">
-        {/* Shadow ellipse */}
-        <ellipse cx="140" cy="255" rx="90" ry="12" fill="rgba(0,0,0,0.25)" />
+      {/* Zona central — imagen + texto */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 min-h-0">
 
-        {/* Building base */}
-        <rect x="55" y="130" width="170" height="110" rx="8" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"/>
+        {/* Imagen PNG o fallback ícono */}
+        <div className="relative flex items-center justify-center mb-4">
+          {/* Halo pulsante detrás de la imagen */}
+          <div className="absolute w-52 h-52 rounded-full animate-pulse-slow pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(0,82,255,0.30) 0%, transparent 70%)' }} />
 
-        {/* Building columns */}
-        {[80, 110, 140, 170, 200].map(x => (
-          <rect key={x} x={x} y="130" width="14" height="110" rx="3" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-        ))}
-
-        {/* Roof / pediment */}
-        <polygon points="40,130 140,70 240,130" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"/>
-
-        {/* Roof detail line */}
-        <line x1="40" y1="130" x2="240" y2="130" stroke="rgba(255,255,255,0.3)" strokeWidth="2"/>
-
-        {/* Top triangle accent */}
-        <polygon points="100,130 140,95 180,130" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" strokeWidth="1"/>
-
-        {/* Door */}
-        <rect x="118" y="185" width="44" height="55" rx="22" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
-        <rect x="126" y="193" width="28" height="40" rx="14" fill="rgba(255,255,255,0.08)"/>
-
-        {/* Windows */}
-        {[[75,155],[115,155],[155,155],[195,155],[75,185],[195,185]].map(([x,y],i) => (
-          <rect key={i} x={x} y={y} width="22" height="18" rx="4"
-            fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.2)" strokeWidth="1"/>
-        ))}
-
-        {/* Landmark icon on top */}
-        <circle cx="140" cy="68" r="18" fill="rgba(129,140,248,0.4)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
-        <text x="140" y="74" textAnchor="middle" fontSize="16" fill="white">🏛</text>
-
-        {/* Coin stack left */}
-        {[0,1,2,3].map(i => (
-          <ellipse key={i} cx="42" cy={230 - i * 9} rx="18" ry="6"
-            fill={i % 2 === 0 ? 'rgba(251,191,36,0.85)' : 'rgba(245,158,11,0.85)'}
-            stroke="rgba(255,255,255,0.2)" strokeWidth="0.8"/>
-        ))}
-        <rect x="24" y="194" width="36" height="36" rx="0" fill="rgba(251,191,36,0.0)"/>
-        {[0,1,2,3].map(i => (
-          <rect key={i} x="24" y={203 - i * 9} width="36" height="9"
-            fill={i % 2 === 0 ? 'rgba(251,191,36,0.7)' : 'rgba(245,158,11,0.7)'}/>
-        ))}
-        <ellipse cx="42" cy="203" rx="18" ry="6" fill="rgba(253,224,71,0.9)" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8"/>
-
-        {/* Coin stack right */}
-        {[0,1,2].map(i => (
-          <rect key={i} x="218" y={215 - i * 9} width="30" height="9"
-            fill={i % 2 === 0 ? 'rgba(251,191,36,0.7)' : 'rgba(245,158,11,0.7)'}/>
-        ))}
-        <ellipse cx="233" cy="215" rx="15" ry="5" fill="rgba(253,224,71,0.9)" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8"/>
-
-        {/* Stars / sparkles */}
-        {[[30,60,'rgba(255,255,255,0.8)'],[250,80,'rgba(251,191,36,0.9)'],[20,160,'rgba(167,139,250,0.8)'],[260,170,'rgba(255,255,255,0.7)']].map(([x,y,c],i) => (
-          <g key={i}>
-            <line x1={x} y1={y-6} x2={x} y2={y+6} stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1={x-6} y1={y} x2={x+6} y2={y} stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
-          </g>
-        ))}
-
-        {/* Floating coins */}
-        <circle cx="65" cy="95" r="10" fill="rgba(251,191,36,0.75)" stroke="rgba(255,255,255,0.3)" strokeWidth="1">
-          <animateTransform attributeName="transform" type="translate" values="0,0;0,-8;0,0" dur="3s" repeatCount="indefinite"/>
-        </circle>
-        <text x="65" y="99" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.9)">
-          <animateTransform attributeName="transform" type="translate" values="0,0;0,-8;0,0" dur="3s" repeatCount="indefinite"/>
-          S/
-        </text>
-
-        <circle cx="215" cy="105" r="8" fill="rgba(251,191,36,0.7)" stroke="rgba(255,255,255,0.3)" strokeWidth="1">
-          <animateTransform attributeName="transform" type="translate" values="0,0;0,-6;0,0" dur="2.5s" begin="0.5s" repeatCount="indefinite"/>
-        </circle>
-      </svg>
-    </div>
-  );
-}
-
-/* ── Input field component ── */
-function InputField({ label, name, type, value, onChange, placeholder, autoComplete, icon: Icon, rightEl, error }) {
-  return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-bold text-theme-muted uppercase tracking-wide">{label}</label>
-      <div className={`relative flex items-center rounded-2xl border-2 transition-all duration-200 ${
-        error
-          ? 'border-red-400 bg-red-50/50 dark:bg-red-500/5'
-          : 'border-theme bg-theme-alt focus-within:border-(--color-primary) focus-within:bg-theme-card focus-within:shadow-glow'
-      }`}>
-        <div className="pl-4 pr-2 shrink-0">
-          <Icon size={16} className="text-theme-soft" />
+          {!imgError ? (
+            <img
+              src="/bcp-persona.png"
+              alt="BCP"
+              onError={() => setImgError(true)}
+              className="relative z-10 w-44 h-44 object-contain drop-shadow-2xl animate-float"
+              style={{ filter: 'drop-shadow(0 16px 32px rgba(0,0,0,0.35))' }}
+            />
+          ) : (
+            /* Fallback: ícono de banco */
+            <div className="relative z-10 w-36 h-36 rounded-3xl flex items-center justify-center animate-float"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                border: '2px solid rgba(255,255,255,0.20)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.30)',
+              }}>
+              <Landmark size={64} className="text-white" strokeWidth={1.2} />
+            </div>
+          )}
         </div>
-        <input
-          type={type}
-          name={name}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          className="flex-1 py-3.5 pr-3 bg-transparent text-theme text-sm outline-none placeholder-theme-soft"
-        />
-        {rightEl && <div className="pr-3 shrink-0">{rightEl}</div>}
+
+        {/* Texto */}
+        <div className="text-center space-y-2 mb-5">
+          <h2 className="text-2xl font-black text-white leading-tight">
+            Tu banca digital,<br/>
+            <span style={{
+              background: 'linear-gradient(135deg,#7aaee0,#FFB81C)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              siempre contigo
+            </span>
+          </h2>
+          <p className="text-white/50 text-xs max-w-[220px] mx-auto leading-relaxed">
+            Gestiona tus finanzas con seguridad y confianza desde cualquier lugar.
+          </p>
+        </div>
+
+        {/* Pills de beneficios */}
+        <div className="grid grid-cols-2 gap-2 w-full max-w-[260px]">
+          {[
+            { Icon: Zap,        label: 'Transferencias al instante', d: '0s'    },
+            { Icon: Shield,     label: 'Seguridad SSL 256-bit',       d: '0.1s'  },
+            { Icon: TrendingUp, label: 'Hasta 8.2% TEA en ahorros',  d: '0.2s'  },
+            { Icon: Smartphone, label: 'Banca móvil 24/7',            d: '0.3s'  },
+          ].map(({ Icon, label, d }) => (
+            <div key={label}
+              className="glass flex items-center gap-2 rounded-xl px-2.5 py-2 animate-fade-in"
+              style={{ animationDelay: d }}>
+              <Icon size={12} style={{ color: '#FFB81C', flexShrink: 0 }} />
+              <span className="text-white/65 text-[10px] font-medium leading-tight">{label}</span>
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Chips flotantes — posición absoluta dentro del panel */}
+      <div className="absolute top-[30%] right-5 glass-card rounded-2xl px-3 py-2.5 flex items-center gap-2.5 animate-float shadow-float z-20"
+        style={{ animationDelay: '0s' }}>
+        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'linear-gradient(135deg,#059669,#0d9488)' }}>
+          <PiggyBank size={13} className="text-white" />
+        </div>
+        <div>
+          <p className="text-white font-black text-xs leading-none">S/ 12,450</p>
+          <p className="text-white/50 text-[10px] mt-0.5">Saldo disponible</p>
+        </div>
+      </div>
+
+      <div className="absolute top-[50%] right-4 glass-card rounded-xl px-2.5 py-2 flex items-center gap-2 animate-float shadow-float z-20"
+        style={{ animationDelay: '1s' }}>
+        <TrendingUp size={12} style={{ color: '#FFB81C' }} />
+        <span className="text-white font-black text-xs">+8.2% TEA</span>
+      </div>
+
+      <div className="absolute bottom-[22%] right-5 glass-card rounded-2xl px-3 py-2.5 flex items-center gap-2.5 animate-float shadow-float z-20"
+        style={{ animationDelay: '1.8s' }}>
+        <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'linear-gradient(135deg,#0052FF,#003087)' }}>
+          <Zap size={13} className="text-white" />
+        </div>
+        <div>
+          <p className="text-white font-bold text-[11px] leading-none">Transferencia</p>
+          <p className="text-white/50 text-[10px] mt-0.5">Enviada ✓</p>
+        </div>
+      </div>
+
+      {/* Destellos decorativos */}
+      {[[18,22],[22,68],[14,52]].map(([top,right],i) => (
+        <div key={i} className="absolute pointer-events-none z-10 animate-pulse-slow"
+          style={{ top:`${top}%`, right:`${right}%`, animationDelay:`${i*0.7}s` }}>
+          <svg width="14" height="14" viewBox="0 0 14 14">
+            <line x1="7" y1="0" x2="7" y2="14" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="0" y1="7" x2="14" y2="7" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+      ))}
+
+      {/* Monedas flotantes */}
+      <div className="absolute top-[18%] left-[15%] animate-float pointer-events-none z-10"
+        style={{ animationDelay: '0.5s' }}>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-xs text-white shadow-lg"
+          style={{ background: 'rgba(251,191,36,0.80)', border: '1px solid rgba(255,255,255,0.25)' }}>
+          S/
+        </div>
+      </div>
+      <div className="absolute top-[38%] left-[8%] animate-float pointer-events-none z-10"
+        style={{ animationDelay: '1.3s' }}>
+        <div className="w-6 h-6 rounded-full flex items-center justify-center font-black text-[10px] text-white shadow-lg"
+          style={{ background: 'rgba(251,191,36,0.65)', border: '1px solid rgba(255,255,255,0.2)' }}>
+          $
+        </div>
+      </div>
+
+      {/* Footer del panel */}
+      <div className="relative z-10 px-8 pb-5 shrink-0">
+        <p className="text-white/25 text-[10px] text-center">© 2026 Banco de Crédito del Perú S.A.</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   SELECTOR TIPO DOCUMENTO
+───────────────────────────────────────────── */
+function DocSelector({ value, onChange, dark }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const border = dark ? '#1F2630' : '#d1d5db';
+  const bg     = dark ? '#1A1F27' : '#ffffff';
+  const textH  = dark ? '#E6EDF3' : '#111827';
+  const textM  = dark ? '#8B9498' : '#6b7280';
+
+  useEffect(() => {
+    if (!open) return;
+    const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button type="button" onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1 px-3 py-3 text-sm font-bold border-r transition-all"
+        style={{ color: textH, background: dark ? '#161B22' : '#f3f4f6', borderColor: border, minWidth: 72 }}>
+        {value}
+        <ChevronDown size={11} className={`transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: textM }} />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 rounded-xl shadow-xl z-50 overflow-hidden border"
+          style={{ background: bg, borderColor: border, minWidth: 110 }}>
+          {DOC_TYPES.map(d => (
+            <button key={d} type="button" onClick={() => { onChange(d); setOpen(false); }}
+              className="w-full text-left px-4 py-2.5 text-sm transition-colors"
+              style={{
+                color: d === value ? '#F47920' : textH,
+                fontWeight: d === value ? 700 : 400,
+                background: d === value ? (dark ? 'rgba(244,121,32,0.1)' : 'rgba(244,121,32,0.06)') : 'transparent',
+              }}
+              onMouseEnter={e => { if (d !== value) e.currentTarget.style.background = dark ? '#1F2630' : '#f9fafb'; }}
+              onMouseLeave={e => { if (d !== value) e.currentTarget.style.background = 'transparent'; }}>
+              {d}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   CAPTCHA VISUAL
+───────────────────────────────────────────── */
+function useCaptcha() {
+  const gen = () => {
+    const c = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    return Array.from({ length: 5 }, () => c[Math.floor(Math.random() * c.length)]).join('');
+  };
+  const [text, setText] = useState(gen);
+  return { text, refresh: () => setText(gen()) };
+}
+
+function CaptchaField({ captchaText, onRefresh, value, onChange, dark }) {
+  const border  = dark ? '#1F2630' : '#d1d5db';
+  const inputBg = dark ? '#0D1117' : '#ffffff';
+  const textH   = dark ? '#E6EDF3' : '#111827';
+  const textM   = dark ? '#8B9498' : '#6b7280';
+
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2 items-stretch">
+        {/* Imagen captcha */}
+        <div className="flex items-center justify-center rounded-xl border px-3 py-2 shrink-0 relative overflow-hidden"
+          style={{ background: dark ? '#161B22' : '#f0f4f8', borderColor: border, minWidth: 100 }}>
+          <svg className="absolute inset-0 w-full h-full opacity-25" viewBox="0 0 100 36">
+            <line x1="0" y1="12" x2="100" y2="24" stroke={dark ? '#334155' : '#94a3b8'} strokeWidth="1"/>
+            <line x1="0" y1="28" x2="100" y2="8"  stroke={dark ? '#334155' : '#94a3b8'} strokeWidth="0.8"/>
+            <line x1="18" y1="0" x2="25" y2="36"  stroke={dark ? '#334155' : '#94a3b8'} strokeWidth="0.6"/>
+          </svg>
+          <span className="relative font-black text-sm tracking-[0.18em] select-none"
+            style={{
+              color: dark ? '#7aaee0' : '#003087',
+              fontFamily: 'monospace',
+              textShadow: dark ? '1px 1px 0 #0052FF55' : '1px 1px 0 #93c5fd88',
+              transform: 'skewX(-4deg)',
+              display: 'inline-block',
+            }}>
+            {captchaText}
+          </span>
+        </div>
+        {/* Refrescar */}
+        <button type="button" onClick={onRefresh}
+          className="flex items-center justify-center w-9 rounded-xl border transition-all shrink-0"
+          style={{ borderColor: border, color: textM, background: dark ? '#161B22' : '#f3f4f6' }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#F47920'; e.currentTarget.style.borderColor = '#F47920'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = textM; e.currentTarget.style.borderColor = border; }}>
+          <RefreshCw size={13} />
+        </button>
+        {/* Input */}
+        <input type="text" value={value} onChange={e => onChange(e.target.value)}
+          placeholder="Código" maxLength={6}
+          className="flex-1 rounded-xl border px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30"
+          style={{ borderColor: border, background: inputBg, color: textH }} />
+      </div>
+      <button type="button" onClick={onRefresh}
+        className="text-xs font-semibold transition-colors"
+        style={{ color: '#F47920' }}
+        onMouseEnter={e => e.currentTarget.style.color = '#003087'}
+        onMouseLeave={e => e.currentTarget.style.color = '#F47920'}>
+        Cambiar código
+      </button>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   FEEDBACK MSG (error / success)
+───────────────────────────────────────────── */
+function FeedbackMsg({ type, msg }) {
+  const isErr = type === 'error';
+  return (
+    <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs border animate-slide-up"
+      style={{
+        background:   isErr ? 'rgba(220,38,38,0.08)' : 'rgba(5,150,105,0.08)',
+        borderColor:  isErr ? 'rgba(220,38,38,0.25)' : 'rgba(5,150,105,0.25)',
+        color:        isErr ? '#dc2626'               : '#059669',
+      }}>
+      {isErr
+        ? <AlertCircle size={13} className="shrink-0 mt-0.5" />
+        : <CheckCircle2 size={13} className="shrink-0 mt-0.5" />}
+      {msg}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   BARRA DE FORTALEZA DE CONTRASEÑA
+───────────────────────────────────────────── */
+function PasswordStrength({ password, dark }) {
+  const checks = [
+    password.length >= 6,
+    /[A-Z]/.test(password),
+    /[0-9]/.test(password),
+    /[^A-Za-z0-9]/.test(password),
+  ];
+  const score = checks.filter(Boolean).length;
+  const labels = ['Muy débil', 'Débil', 'Regular', 'Fuerte'];
+  const colors = ['#dc2626', '#f97316', '#eab308', '#059669'];
+  return (
+    <div className="space-y-1 pt-1">
+      <div className="flex gap-1">
+        {[0,1,2,3].map(i => (
+          <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
+            style={{ background: i < score ? colors[score - 1] : (dark ? '#1F2630' : '#e5e7eb') }} />
+        ))}
+      </div>
+      <p className="text-[10px] font-semibold" style={{ color: score > 0 ? colors[score - 1] : (dark ? '#8B9498' : '#9ca3af') }}>
+        {score > 0 ? labels[score - 1] : ''}
+      </p>
     </div>
   );
 }
 
 /* ══════════════════════════════════════════════
-   LOGIN PAGE
+   LOGIN PAGE — ocupa exactamente 100vh
 ══════════════════════════════════════════════ */
 export default function LoginPage() {
   const navigate = useNavigate();
   const { iniciarSesion } = useAuth();
-  const { dark, toggle } = useTheme();
+  const { dark, toggle }  = useTheme();
 
-  const [form, setForm]         = useState({ email: '', password: '' });
-  const [showPass, setShowPass] = useState(false);
-  const [error, setError]       = useState('');
+  const [timeLeft, setTimeLeft] = useState(SESSION_TIMEOUT);
+  useEffect(() => {
+    const t = setInterval(() => setTimeLeft(s => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  /* ── Modo activo: 'tarjeta' | 'email' ── */
+  const [modo, setModo] = useState('tarjeta');
+
+  /* ── Estado formulario tarjeta ── */
+  const [tipo,       setTipo]       = useState('persona');
+  const [docType,    setDocType]    = useState('DNI');
+  const [docNum,     setDocNum]     = useState('');
+  const [nroTarjeta, setNroTarjeta] = useState('');
+  const [clave,      setClave]      = useState('');
+  const [showClave,  setShowClave]  = useState(false);
+  const [captchaVal, setCaptchaVal] = useState('');
+  const [remember,   setRemember]   = useState(false);
+  const { text: captchaText, refresh: refreshCaptcha } = useCaptcha();
+
+  /* ── Estado formulario email ── */
+  const [email,        setEmail]        = useState('');
+  const [password,     setPassword]     = useState('');
+  const [showPass,     setShowPass]     = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passTouched,  setPassTouched]  = useState(false);
+
+  /* ── Estado compartido ── */
+  const [error,    setError]    = useState('');
+  const [success,  setSuccess]  = useState('');
   const [cargando, setCargando] = useState(false);
-  const [step, setStep]         = useState(1); // 1 = email, 2 = password
 
-  function handleChange(e) {
-    setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-    if (error) setError('');
-  }
+  /* Limpiar al cambiar modo */
+  useEffect(() => {
+    setError(''); setSuccess('');
+    setEmailTouched(false); setPassTouched(false);
+  }, [modo]);
 
-  async function handleSubmit(e) {
+  const pageBg  = dark ? '#0D1117' : '#f0f4f8';
+  const cardBg  = dark ? '#1A1F27' : '#ffffff';
+  const border  = dark ? '#1F2630' : '#d1d5db';
+  const textH   = dark ? '#E6EDF3' : '#111827';
+  const textM   = dark ? '#8B9498' : '#6b7280';
+  const inputBg = dark ? '#0D1117' : '#ffffff';
+  const urgent  = timeLeft < 60;
+
+  /* ── Validaciones email ── */
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const passValid  = password.length >= 6;
+  const emailError = emailTouched && !emailValid ? 'Ingresa un correo válido.' : '';
+  const passError  = passTouched  && !passValid  ? 'Mínimo 6 caracteres.' : '';
+
+  /* ── Submit modo tarjeta ── */
+  async function handleSubmitTarjeta(e) {
     e.preventDefault();
-    if (!form.email || !form.password) { setError('Completa todos los campos.'); return; }
-    setCargando(true);
-    try {
-      const data = await login(form.email, form.password);
-      iniciarSesion(data.token, data.user);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Credenciales incorrectas. Intenta de nuevo.');
-    } finally {
-      setCargando(false);
+    if (!docNum.trim()) { setError('Ingresa tu número de documento.'); return; }
+    if (!clave.trim())  { setError('Ingresa tu clave de Internet.'); return; }
+    if (captchaVal.trim().toUpperCase() !== captchaText.toUpperCase()) {
+      setError('El código de seguridad no coincide.'); refreshCaptcha(); setCaptchaVal(''); return;
     }
+    setCargando(true); setError('');
+    try {
+      const data = await login(docNum, clave);
+      iniciarSesion(data.token, data.user);
+      setSuccess('¡Bienvenido! Redirigiendo...');
+      setTimeout(() => navigate('/dashboard'), 800);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Datos incorrectos. Verifica e intenta de nuevo.');
+      refreshCaptcha(); setCaptchaVal('');
+    } finally { setCargando(false); }
   }
 
+  /* ── Submit modo email ── */
+  async function handleSubmitEmail(e) {
+    e.preventDefault();
+    setEmailTouched(true); setPassTouched(true);
+    if (!emailValid) { setError('Ingresa un correo electrónico válido.'); return; }
+    if (!passValid)  { setError('La contraseña debe tener al menos 6 caracteres.'); return; }
+    setCargando(true); setError('');
+    try {
+      const data = await login(email.trim().toLowerCase(), password);
+      iniciarSesion(data.token, data.user);
+      setSuccess('¡Bienvenido! Redirigiendo...');
+      setTimeout(() => navigate('/dashboard'), 800);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Correo o contraseña incorrectos.');
+    } finally { setCargando(false); }
+  }
+
+  /* Layout: h-screen overflow-hidden — todo cabe en la pantalla */
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden" style={{ background: 'var(--color-bg)' }}>
+    <div className="h-screen overflow-hidden flex" style={{ background: pageBg }}>
 
-      {/* ════════════════════════════════════════
-          LEFT PANEL — ilustración + branding
-      ════════════════════════════════════════ */}
-      <div className="hidden lg:flex flex-col w-[52%] relative overflow-hidden"
-        style={{ background: 'linear-gradient(145deg, #1e1b4b 0%, #312e81 40%, #4c1d95 75%, #2e1065 100%)' }}>
+      {/* ── Panel izquierdo ── */}
+      <LeftPanel />
 
-        {/* Background pattern */}
-        <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="lp-iso" x="0" y="0" width="40" height="46" patternUnits="userSpaceOnUse">
-              <polygon points="20,0 40,11.5 20,23 0,11.5" fill="none" stroke="rgba(255,255,255,1)" strokeWidth="0.6"/>
-              <polygon points="0,11.5 20,23 20,46 0,34.5" fill="none" stroke="rgba(255,255,255,1)" strokeWidth="0.6"/>
-              <polygon points="20,23 40,11.5 40,34.5 20,46" fill="none" stroke="rgba(255,255,255,1)" strokeWidth="0.6"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#lp-iso)"/>
-        </svg>
+      {/* ── Panel derecho: columna flex que llena el alto ── */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden" style={{ background: pageBg }}>
 
-        {/* Glow blobs */}
-        <div className="absolute top-1/4 -left-24 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(129,140,248,0.25) 0%, transparent 70%)' }}/>
-        <div className="absolute bottom-1/4 right-0 w-72 h-72 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(192,132,252,0.2) 0%, transparent 70%)' }}/>
-        <div className="absolute top-3/4 left-1/3 w-48 h-48 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.12) 0%, transparent 70%)' }}/>
-
-        {/* ── TOP: Logo ── */}
-        <div className="relative z-10 p-10 flex items-center gap-3">
-          <div className="w-11 h-11 bg-linear-to-br from-indigo-400 to-violet-600 rounded-2xl flex items-center justify-center shadow-glow">
-            <Landmark size={22} className="text-white"/>
+        {/* Header — altura fija */}
+        <header className="shrink-0 flex items-center justify-between px-5 py-2.5 border-b"
+          style={{ background: cardBg, borderColor: border }}>
+          {/* Logo móvil */}
+          <div className="lg:hidden">
+            <BcpLogo textColor={dark ? '#E6EDF3' : '#003087'} />
           </div>
-          <div>
-            <span className="text-white font-black text-xl tracking-tight">
-              Banco<span className="text-violet-300">Confianza</span>
-            </span>
-            <p className="text-white/40 text-xs">Supervisado por la SBS</p>
-          </div>
-        </div>
+          <div className="hidden lg:block" />
 
-        {/* ── CENTER: Illustration + floating cards ── */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-10">
-
-          {/* Headline */}
-          <div className="text-center mb-6 space-y-2">
-            <h2 className="text-4xl font-black text-white leading-tight">
-              Tu banca digital,<br/>
-              <span style={{
-                background: 'linear-gradient(135deg, #a78bfa, #f0abfc)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>siempre contigo</span>
-            </h2>
-            <p className="text-white/55 text-sm max-w-xs mx-auto leading-relaxed">
-              Gestiona tus finanzas con seguridad y confianza desde cualquier lugar.
-            </p>
-          </div>
-
-          {/* Illustration — sobresale hacia la derecha */}
-          <div className="relative w-full flex justify-center" style={{ marginRight: '-60px' }}>
-            <BankIllustration/>
-
-            {/* Floating chip — balance */}
-            <div className="absolute top-4 -left-2 glass-card rounded-2xl px-4 py-3 flex items-center gap-3 animate-float shadow-float"
-              style={{ animationDelay: '0s' }}>
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-emerald-400 to-teal-500 flex items-center justify-center shrink-0">
-                <PiggyBank size={17} className="text-white"/>
-              </div>
-              <div>
-                <p className="text-white font-black text-sm">S/ 12,450</p>
-                <p className="text-white/55 text-xs">Saldo disponible</p>
-              </div>
-            </div>
-
-            {/* Floating chip — transfer */}
-            <div className="absolute bottom-8 -left-4 glass-card rounded-2xl px-4 py-3 flex items-center gap-3 animate-float shadow-float"
-              style={{ animationDelay: '1.5s' }}>
-              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-blue-400 to-indigo-500 flex items-center justify-center shrink-0">
-                <Zap size={17} className="text-white"/>
-              </div>
-              <div>
-                <p className="text-white font-bold text-xs">Transferencia</p>
-                <p className="text-white/55 text-xs">Enviada al instante ✓</p>
-              </div>
-            </div>
-
-            {/* Floating chip — rate */}
-            <div className="absolute top-1/2 -right-2 glass-card rounded-2xl px-3 py-2.5 flex items-center gap-2.5 animate-float shadow-float"
-              style={{ animationDelay: '0.8s' }}>
-              <div className="w-8 h-8 rounded-xl bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center shrink-0">
-                <TrendingUp size={15} className="text-white"/>
-              </div>
-              <div>
-                <p className="text-white font-black text-xs">+8.2% TEA</p>
-                <p className="text-white/55 text-xs">Rendimiento</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── BOTTOM: Feature pills ── */}
-        <div className="relative z-10 p-10 pt-4">
-          <div className="grid grid-cols-2 gap-2">
-            {FEATURES.map(({ icon: Icon, label, color, delay }) => (
-              <div key={label}
-                className="flex items-center gap-2.5 glass rounded-xl px-3 py-2.5 animate-fade-in"
-                style={{ animationDelay: delay }}>
-                <div className={`w-7 h-7 rounded-lg bg-linear-to-br ${color} flex items-center justify-center shrink-0`}>
-                  <Icon size={13} className="text-white"/>
-                </div>
-                <span className="text-white/75 text-xs font-medium leading-tight">{label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right-edge wave that bleeds into the form panel */}
-        <div className="absolute top-0 right-0 h-full w-16 pointer-events-none"
-          style={{
-            background: 'linear-gradient(to right, transparent, var(--color-bg-card))',
-            opacity: 0.08,
-          }}/>
-      </div>
-
-      {/* ════════════════════════════════════════
-          RIGHT PANEL — form
-      ════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col min-h-screen bg-theme-card relative overflow-hidden">
-
-        {/* Subtle top-right glow */}
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(129,140,248,0.06) 0%, transparent 70%)' }}/>
-
-        {/* ── Top bar ── */}
-        <div className="flex items-center justify-between px-8 pt-8 pb-0">
-          <button onClick={() => navigate('/')}
-            className="flex items-center gap-1.5 text-theme-soft hover:text-theme text-sm font-medium transition-colors group">
-            <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform"/>
-            Volver al inicio
-          </button>
-          <button onClick={toggle}
-            className="w-9 h-9 rounded-xl flex items-center justify-center border border-theme text-theme-muted hover:text-theme hover:bg-theme transition-all">
-            {dark ? <Sun size={16} className="text-amber-400"/> : <Moon size={16}/>}
-          </button>
-        </div>
-
-        {/* ── Form area ── */}
-        <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 lg:px-16 py-8">
-          <div className="w-full max-w-sm mx-auto space-y-8">
-
-            {/* Mobile logo */}
-            <div className="lg:hidden flex items-center gap-2.5">
-              <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-glow">
-                <Landmark size={20} className="text-white"/>
-              </div>
-              <span className="font-black text-lg text-theme">
-                Banco<span className="text-primary">Confianza</span>
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Countdown */}
+            <div className="flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: urgent ? '#dc2626' : textM }}>
+              <Clock size={12} style={{ color: urgent ? '#dc2626' : '#F47920' }} />
+              <span className="hidden sm:inline">Esta ventana se cerrará en</span>
+              <span className="font-black tabular-nums text-sm"
+                style={{ color: urgent ? '#dc2626' : (dark ? '#E6EDF3' : '#003087') }}>
+                {timeLeft}
               </span>
+              <span className="hidden sm:inline">segundos</span>
             </div>
+            <div className="w-px h-4 shrink-0" style={{ background: border }} />
+            <button className="hidden sm:flex items-center gap-1 text-xs font-medium transition-colors"
+              style={{ color: textM }}
+              onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+              onMouseLeave={e => e.currentTarget.style.color = textM}>
+              <HelpCircle size={13} /> Preguntas frecuentes
+            </button>
+            <button onClick={toggle}
+              className="w-7 h-7 rounded-lg flex items-center justify-center border transition-all"
+              style={{ borderColor: border, color: textM }}
+              onMouseEnter={e => e.currentTarget.style.background = dark ? '#1F2630' : '#f3f4f6'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              {dark ? <Sun size={13} className="text-amber-400" /> : <Moon size={13} />}
+            </button>
+          </div>
+        </header>
 
-            {/* Heading */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="h-1 w-8 rounded-full bg-linear-to-r from-indigo-500 to-violet-500"/>
-                <span className="text-xs font-bold text-theme-muted uppercase tracking-widest">Banca en Línea</span>
-              </div>
-              <h1 className="text-3xl font-black text-theme leading-tight">
-                Bienvenido<br/>de vuelta 👋
-              </h1>
-              <p className="text-theme-soft text-sm pt-1">
-                Ingresa tus credenciales para acceder a tu cuenta segura.
-              </p>
-            </div>
+        {/* Zona scrollable interna — solo si el contenido no cabe */}
+        <div className="flex-1 overflow-y-auto flex flex-col">
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Contenido centrado */}
+          <div className="flex-1 flex items-center justify-center px-4 py-4">
+            <div className="w-full max-w-sm">
 
-              <InputField
-                label="Correo electrónico"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="tucorreo@ejemplo.com"
-                autoComplete="email"
-                icon={Mail}
-              />
-
-              <InputField
-                label="Contraseña"
-                name="password"
-                type={showPass ? 'text' : 'password'}
-                value={form.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                icon={Lock}
-                rightEl={
-                  <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="text-theme-soft hover:text-theme-muted transition-colors p-1">
-                    {showPass ? <EyeOff size={15}/> : <Eye size={15}/>}
-                  </button>
-                }
-              />
-
-              {/* Forgot password */}
-              <div className="flex justify-end -mt-2">
-                <a href="#" className="text-primary text-xs font-semibold hover:underline">
-                  ¿Olvidaste tu contraseña?
-                </a>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-2.5 bg-danger-lt border border-red-300/30 rounded-2xl px-4 py-3 text-danger text-sm animate-slide-up">
-                  <AlertCircle size={15} className="shrink-0"/>
-                  {error}
-                </div>
-              )}
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={cargando}
-                className="w-full flex items-center justify-center gap-2.5 text-white py-4 rounded-2xl font-bold text-sm transition-all btn-glow disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group"
-                style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
-              >
-                {/* Shimmer on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{
-                    background: 'linear-gradient(110deg, transparent 35%, rgba(255,255,255,0.15) 50%, transparent 65%)',
-                    backgroundSize: '200% 100%',
-                    animation: 'shimmer-sweep 2s ease infinite',
-                  }}/>
-                {cargando ? (
-                  <><Loader2 size={16} className="animate-spin"/> Verificando...</>
-                ) : (
-                  <><span>Ingresar a mi cuenta</span> <ArrowRight size={16}/></>
-                )}
+              {/* Volver */}
+              <button onClick={() => navigate('/')}
+                className="flex items-center gap-1.5 text-xs font-medium mb-3 transition-colors"
+                style={{ color: '#0052FF' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+                onMouseLeave={e => e.currentTarget.style.color = '#0052FF'}>
+                <ArrowLeft size={12} /> Volver
               </button>
-            </form>
 
-            {/* Trust badges */}
-            <div className="flex items-center justify-center gap-4 pt-2">
-              {[
-                { icon: Shield,   text: 'SSL 256-bit' },
-                { icon: CheckCircle, text: 'SBS Perú' },
-                { icon: Star,     text: 'Banco #1' },
-              ].map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-1.5 text-theme-soft text-xs">
-                  <Icon size={12} className="text-primary"/>
-                  {text}
+              {/* Título */}
+              <div className="text-center mb-3">
+                <h1 className="text-lg font-black" style={{ color: textH }}>Banca por Internet</h1>
+                <p className="text-xs mt-0.5" style={{ color: textM }}>Ingresa con tus datos de acceso</p>
+              </div>
+
+              {/* ── Selector de modo ── */}
+              <div className="flex rounded-xl border p-1 mb-4"
+                style={{ borderColor: border, background: dark ? '#161B22' : '#f3f4f6' }}>
+                {[
+                  { id: 'tarjeta', Icon: CreditCard, label: 'Tarjeta y clave'      },
+                  { id: 'email',   Icon: Mail,        label: 'Correo y contraseña' },
+                ].map(({ id, Icon, label }) => (
+                  <button key={id} type="button" onClick={() => setModo(id)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all"
+                    style={{
+                      background: modo === id ? (dark ? '#1A1F27' : '#ffffff') : 'transparent',
+                      color:      modo === id ? (dark ? '#E6EDF3'  : '#003087') : textM,
+                      boxShadow:  modo === id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                    }}>
+                    <Icon size={13} style={{ color: modo === id ? '#F47920' : textM }} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Card */}
+              <div className="rounded-2xl border shadow-card overflow-hidden"
+                style={{ background: cardBg, borderColor: border }}>
+
+                {/* ════ MODO TARJETA ════ */}
+                {modo === 'tarjeta' && (<>
+                {/* Encabezado "Tarjeta y clave" */}
+                <div className="px-5 pt-4 pb-0">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CreditCard size={15} style={{ color: '#0052FF' }} />
+                    <span className="text-sm font-black" style={{ color: '#0052FF' }}>Tarjeta y clave</span>
+                  </div>
+
+                  {/* Radio Persona / Empresa */}
+                  <div className="flex items-center gap-5 mb-4">
+                    {[{ id: 'persona', label: 'Persona' }, { id: 'empresa', label: 'Empresa' }].map(({ id, label }) => (
+                      <label key={id} className="flex items-center gap-2 cursor-pointer select-none">
+                        <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all shrink-0"
+                          style={{ borderColor: tipo === id ? '#F47920' : border }}
+                          onClick={() => setTipo(id)}>
+                          {tipo === id && <div className="w-2 h-2 rounded-full" style={{ background: '#F47920' }} />}
+                        </div>
+                        <span className="text-sm" style={{ color: tipo === id ? textH : textM, fontWeight: tipo === id ? 600 : 400 }}>
+                          {label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
+
+                <form onSubmit={handleSubmitTarjeta} className="px-5 pb-5 space-y-3">
+
+                  {/* DNI + Nro documento */}
+                  <div className="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
+                    style={{ borderColor: border }}>
+                    <DocSelector value={docType} onChange={setDocType} dark={dark} />
+                    <input type="text" value={docNum}
+                      onChange={e => { setDocNum(e.target.value); setError(''); }}
+                      placeholder="Nro de documento"
+                      maxLength={docType === 'RUC' ? 11 : docType === 'DNI' ? 8 : 20}
+                      className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
+                      style={{ color: textH, background: inputBg }}
+                      autoComplete="username" />
+                  </div>
+
+                  {/* Número de tarjeta */}
+                  <input type="text" value={nroTarjeta}
+                    onChange={e => setNroTarjeta(e.target.value.replace(/\D/g,'').slice(0,16))}
+                    placeholder="Número de tarjeta"
+                    className="w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 focus:ring-blue-500/30"
+                    style={{ borderColor: border, background: inputBg, color: textH }} />
+
+                  {/* Recordar datos */}
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <div className="w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0"
+                      style={{ borderColor: remember ? '#F47920' : border, background: remember ? '#F47920' : 'transparent' }}
+                      onClick={() => setRemember(v => !v)}>
+                      {remember && (
+                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                          <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-sm" style={{ color: textM }}>Recordar datos</span>
+                  </label>
+
+                  {/* Clave 6 dígitos */}
+                  <div>
+                    <div className="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
+                      style={{ borderColor: border }}>
+                      <input type={showClave ? 'text' : 'password'} value={clave}
+                        onChange={e => { setClave(e.target.value); setError(''); }}
+                        placeholder="Clave de Internet de 6 dígitos"
+                        maxLength={6}
+                        className="flex-1 px-4 py-2.5 text-sm outline-none bg-transparent"
+                        style={{ color: textH, background: inputBg }}
+                        autoComplete="current-password" />
+                      <button type="button" onClick={() => setShowClave(v => !v)}
+                        className="pr-3 flex items-center transition-colors"
+                        style={{ color: textM }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+                        onMouseLeave={e => e.currentTarget.style.color = textM}>
+                        {showClave ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      {['Crear clave', 'Olvidé mi clave'].map(l => (
+                        <button key={l} type="button"
+                          className="text-xs font-semibold transition-colors"
+                          style={{ color: '#F47920' }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#003087'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#F47920'}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Captcha */}
+                  <CaptchaField
+                    captchaText={captchaText}
+                    onRefresh={refreshCaptcha}
+                    value={captchaVal}
+                    onChange={v => { setCaptchaVal(v); setError(''); }}
+                    dark={dark}
+                  />
+
+                  {/* Error / Éxito */}
+                  {error   && <FeedbackMsg type="error"   msg={error}   />}
+                  {success && <FeedbackMsg type="success" msg={success} />}
+
+                  {/* Botón Continuar */}
+                  <button type="submit" disabled={cargando || timeLeft === 0}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg,#F47920 0%,#e06010 100%)' }}>
+                    {cargando
+                      ? <><Loader2 size={15} className="animate-spin" /> Verificando...</>
+                      : 'Continuar'
+                    }
+                  </button>
+                </form>
+                </>)}
+
+                {/* ════ MODO EMAIL ════ */}
+                {modo === 'email' && (
+                  <form onSubmit={handleSubmitEmail} className="px-5 py-5 space-y-4" noValidate>
+
+                    <div className="flex items-center gap-2 mb-1">
+                      <Mail size={15} style={{ color: '#0052FF' }} />
+                      <span className="text-sm font-black" style={{ color: '#0052FF' }}>Correo y contraseña</span>
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold" style={{ color: textM }}>
+                        Correo electrónico
+                      </label>
+                      <div className="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
+                        style={{ borderColor: emailTouched && !emailValid ? '#dc2626' : border }}>
+                        <div className="flex items-center pl-3 shrink-0">
+                          <Mail size={14} style={{ color: emailTouched && !emailValid ? '#dc2626' : textM }} />
+                        </div>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={e => { setEmail(e.target.value); setError(''); }}
+                          onBlur={() => setEmailTouched(true)}
+                          placeholder="tucorreo@ejemplo.com"
+                          className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
+                          style={{ color: textH, background: inputBg }}
+                          autoComplete="email"
+                        />
+                        {emailTouched && emailValid && (
+                          <div className="flex items-center pr-3">
+                            <CheckCircle2 size={14} style={{ color: '#059669' }} />
+                          </div>
+                        )}
+                      </div>
+                      {emailError && (
+                        <p className="text-xs flex items-center gap-1" style={{ color: '#dc2626' }}>
+                          <AlertCircle size={11} /> {emailError}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Contraseña */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold" style={{ color: textM }}>
+                        Contraseña
+                      </label>
+                      <div className="flex rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/30 transition-all"
+                        style={{ borderColor: passTouched && !passValid ? '#dc2626' : border }}>
+                        <div className="flex items-center pl-3 shrink-0">
+                          <KeyRound size={14} style={{ color: passTouched && !passValid ? '#dc2626' : textM }} />
+                        </div>
+                        <input
+                          type={showPass ? 'text' : 'password'}
+                          value={password}
+                          onChange={e => { setPassword(e.target.value); setError(''); }}
+                          onBlur={() => setPassTouched(true)}
+                          placeholder="Mínimo 6 caracteres"
+                          className="flex-1 px-3 py-2.5 text-sm outline-none bg-transparent"
+                          style={{ color: textH, background: inputBg }}
+                          autoComplete="current-password"
+                        />
+                        <button type="button" onClick={() => setShowPass(v => !v)}
+                          className="pr-3 flex items-center transition-colors"
+                          style={{ color: textM }}
+                          onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+                          onMouseLeave={e => e.currentTarget.style.color = textM}>
+                          {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                      {passError && (
+                        <p className="text-xs flex items-center gap-1" style={{ color: '#dc2626' }}>
+                          <AlertCircle size={11} /> {passError}
+                        </p>
+                      )}
+                      {password.length > 0 && <PasswordStrength password={password} dark={dark} />}
+                    </div>
+
+                    {/* ¿Olvidaste tu contraseña? */}
+                    <div className="flex justify-end -mt-1">
+                      <button type="button"
+                        className="text-xs font-semibold transition-colors"
+                        style={{ color: '#F47920' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#003087'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#F47920'}>
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+
+                    {/* Error / Éxito */}
+                    {error   && <FeedbackMsg type="error"   msg={error}   />}
+                    {success && <FeedbackMsg type="success" msg={success} />}
+
+                    {/* Botón ingresar */}
+                    <button type="submit" disabled={cargando || timeLeft === 0}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: 'linear-gradient(135deg,#0052FF 0%,#003087 100%)' }}>
+                      {cargando
+                        ? <><Loader2 size={15} className="animate-spin" /> Verificando...</>
+                        : <><Mail size={15} /> Ingresar con correo</>
+                      }
+                    </button>
+
+                    {/* Separador + registro */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px" style={{ background: border }} />
+                      <span className="text-xs" style={{ color: textM }}>¿No tienes cuenta?</span>
+                      <div className="flex-1 h-px" style={{ background: border }} />
+                    </div>
+                    <Link to="/registro"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+                      style={{ borderColor: dark ? '#0052FF' : '#003087', color: dark ? '#4D9FFF' : '#003087' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = dark ? '#0052FF' : '#003087'; e.currentTarget.style.color = 'white'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = dark ? '#4D9FFF' : '#003087'; }}>
+                      Crear cuenta nueva
+                    </Link>
+                  </form>
+                )}
+              </div>
+
+              {/* Aviso seguridad */}
+              <div className="mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 border"
+                style={{ background: dark ? 'rgba(0,82,255,0.05)' : '#f0f4ff', borderColor: dark ? 'rgba(0,82,255,0.12)' : '#c7d7ff' }}>
+                <Shield size={13} className="shrink-0 mt-0.5" style={{ color: '#0052FF' }} />
+                <p className="text-[11px] leading-relaxed" style={{ color: textM }}>
+                  Esta es una página segura del BCP. Si tienes dudas comunícate al{' '}
+                  <span className="font-bold" style={{ color: textH }}>(01) 311-9898</span>
+                  {' '}o a través de nuestros medios digitales.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer legal */}
+          <footer className="shrink-0 border-t py-3 px-4 text-center"
+            style={{ background: cardBg, borderColor: border }}>
+            <p className="text-xs font-semibold" style={{ color: textM }}>
+              Banco de Crédito del Perú S.A — RUC: 20100047218
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: dark ? '#374151' : '#9ca3af' }}>
+              Todos los derechos reservados · © 2026 VIABCP.com
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-1">
+              {[['Términos y condiciones','/terminos'],['Política de privacidad','/privacidad'],['Tarifario','/tarifario']].map(([l,to]) => (
+                <Link key={l} to={to}
+                  className="text-[11px] transition-colors"
+                  style={{ color: dark ? '#374151' : '#9ca3af' }}
+                  onMouseEnter={e => e.currentTarget.style.color = '#F47920'}
+                  onMouseLeave={e => e.currentTarget.style.color = dark ? '#374151' : '#9ca3af'}>
+                  {l}
+                </Link>
               ))}
             </div>
-
-            {/* Footer */}
-            <p className="text-center text-theme-soft text-xs leading-relaxed">
-              Al ingresar aceptas nuestros{' '}
-              <a href="#" className="text-theme-muted hover:text-theme font-medium transition-colors">Términos</a>
-              {' '}y{' '}
-              <a href="#" className="text-theme-muted hover:text-theme font-medium transition-colors">Privacidad</a>.
-            </p>
-          </div>
-        </div>
-
-        {/* ── Bottom decoration ── */}
-        <div className="px-8 pb-8 flex items-center justify-center gap-2">
-          <div className="h-px flex-1 bg-theme"/>
-          <span className="text-theme-soft text-xs px-3">© 2026 BancoConfianza S.A.</span>
-          <div className="h-px flex-1 bg-theme"/>
+          </footer>
         </div>
       </div>
     </div>

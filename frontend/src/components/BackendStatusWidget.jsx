@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Server, Wifi, WifiOff, Loader2, X,
   RefreshCw, CheckCircle2, AlertTriangle, Clock,
@@ -225,7 +225,15 @@ export default function BackendStatusWidget() {
   const { status, lastCheck, check, toast, dismissToast } = useBackendStatus();
   const [panelOpen, setPanelOpen] = useState(false);
   const [spinning, setSpinning]   = useState(false);
+  useEffect(() => {
+  if (toast.visible) {
+    const timer = setTimeout(() => {
+      dismissToast();
+    }, 5000);
 
+    return () => clearTimeout(timer);
+  }
+}, [toast.visible, dismissToast]);
   async function handleRefresh() {
     setSpinning(true);
     await check();

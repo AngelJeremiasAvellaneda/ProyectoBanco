@@ -6,8 +6,8 @@ import Footer from '../components/Footer';
 const CANALES = [
   {
     icon: Phone,
-    title: 'Línea gratuita',
-    valor: '0800-00-123',
+    title: 'Línea BCP',
+    valor: '(01) 311-9898',
     sub: 'Lunes a Sábado 8am – 8pm',
     color: 'from-blue-500 to-indigo-600',
   },
@@ -21,14 +21,14 @@ const CANALES = [
   {
     icon: Mail,
     title: 'Correo electrónico',
-    valor: 'atencion@bancoconfianza.pe',
+    valor: 'atencion@viabcp.com',
     sub: 'Respuesta en menos de 24 horas',
     color: 'from-violet-500 to-purple-600',
   },
   {
     icon: Building2,
     title: 'Agencias',
-    valor: '180+ a nivel nacional',
+    valor: '450+ a nivel nacional',
     sub: 'Lunes a Sábado 9am – 6pm',
     color: 'from-orange-500 to-amber-600',
   },
@@ -230,9 +230,9 @@ export default function ContactoPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { label: 'Bloqueo de tarjetas', valor: '0800-00-999', badge: '24/7' },
-                  { label: 'Fraudes y seguridad', valor: '0800-00-888', badge: '24/7' },
-                  { label: 'WhatsApp',             valor: '+51 999 000 123', badge: null },
+                  { label: 'Bloqueo de tarjetas', valor: '0800-00-227', badge: '24/7' },
+                  { label: 'Fraudes y seguridad', valor: '(01) 311-9898', badge: '24/7' },
+                  { label: 'WhatsApp BCP',         valor: '+51 980 000 000', badge: null },
                 ].map(({ label, valor, badge }) => (
                   <div key={label} className="flex items-center justify-between">
                     <div>
@@ -265,7 +265,7 @@ export default function ContactoPage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-theme">Nuestras agencias principales</h2>
-            <p className="text-theme-muted text-sm mt-1">Visítanos en cualquiera de nuestras 180+ agencias a nivel nacional</p>
+            <p className="text-theme-muted text-sm mt-1">Visítanos en cualquiera de nuestras 450+ agencias a nivel nacional</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {AGENCIAS.map(({ ciudad, dir, tel }) => (

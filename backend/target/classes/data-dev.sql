@@ -1,14 +1,14 @@
 -- ─────────────────────────────────────────────────────────────
 -- Datos de prueba para perfil DEV (H2 en memoria)
--- Usuario: demo@bancoconfianza.pe / 123456
+-- Usuario: demo@viabcp.com / 123456
 -- ─────────────────────────────────────────────────────────────
 
 -- Usuario de prueba
 -- Password "123456" hasheado con BCrypt (10 rounds)
 INSERT INTO usuarios (nombre, email, password, rol, activo, created_at)
 VALUES (
-    'Demo Usuario',
-    'demo@bancoconfianza.pe',
+    'Demo Usuario BCP',
+    'demo@viabcp.com',
     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
     'CLIENTE',
     true,

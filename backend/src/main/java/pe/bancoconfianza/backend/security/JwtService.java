@@ -38,7 +38,7 @@ public class JwtService {
     @Value("${supabase.url:}")
     private String supabaseUrl;
 
-    @Value("${app.jwt.secret:MiClaveSecretaSuperSeguraParaBancoConfianza2026XYZ}")
+    @Value("${app.jwt.secret:MiClaveSecretaSuperSeguraParaBCP2026XYZ}")
     private String jwtSecret;
 
     // Cache de claves públicas de Supabase: kid → PublicKey
