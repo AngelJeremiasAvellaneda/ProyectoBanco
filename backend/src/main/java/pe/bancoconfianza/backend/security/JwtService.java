@@ -196,6 +196,17 @@ public class JwtService {
         }
     }
 
+    /* ── Generar JWT HS256 propio ── */
+    public String generateToken(String email, long expirationMs) {
+        return Jwts.builder()
+            .subject(email)
+            .claim("email", email)
+            .issuedAt(new java.util.Date())
+            .expiration(new java.util.Date(System.currentTimeMillis() + expirationMs))
+            .signWith(hs256Key())
+            .compact();
+    }
+
     /* ── HS256 (JWT propio — compatibilidad) ── */
     private SecretKey hs256Key() {
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);

@@ -32,6 +32,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.FORBIDDEN, "Cuenta deshabilitada. Contacta al soporte.");
     }
 
+    /** Estado inválido del negocio — 422 */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
+        return error(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
     /** Argumentos inválidos (negocio) — 400 */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {

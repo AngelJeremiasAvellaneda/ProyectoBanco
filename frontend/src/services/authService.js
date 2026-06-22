@@ -1,99 +1,75 @@
 import axios from 'axios';
-import { supabase, supabaseConfigured } from '../lib/supabase';
+
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api';
 
 // ── Cliente axios para el backend Spring Boot ──────────────────────────────
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 });
 
-// Adjunta el token de Supabase en cada request al backend
+// Adjunta el token JWT en cada request
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  // Log de cada petición saliente en desarrollo
+  if (import.meta.env.DEV) {
+    console.groupCollapsed(`[API] ➜ ${(config.method ?? 'GET').toUpperCase()} ${config.url}`);
+    console.log('Base URL:', config.baseURL);
+    if (config.data) console.log('Payload:', config.data);
+    console.groupEnd();
+  }
+
   return config;
 });
 
-// ── Login con Supabase Auth ────────────────────────────────────────────────
+// Interceptor de respuesta — captura y loguea todos los errores HTTP
+apiClient.interceptors.response.use(
+  (response) => {
+    if (import.meta.env.DEV) {
+      console.log(
+        `[API] ✓ ${response.status} ${(response.config.method ?? 'GET').toUpperCase()} ${response.config.url}`,
+      );
+    }
+    return response;
+  },
+  (error) => {
+    const status  = error?.response?.status;
+    const url     = error?.config?.url ?? '?';
+    const method  = (error?.config?.method ?? 'GET').toUpperCase();
+    const message =
+      error?.response?.data?.message ??
+      error?.response?.data?.error ??
+      error?.message ??
+      'Error desconocido';
+
+    console.error(
+      `[API] ✗ ${status ?? 'NET'} ${method} ${url} — ${message}`,
+      error?.response?.data ?? '',
+    );
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('api:error', {
+          detail: { status, method, url, message, timestamp: new Date() },
+        }),
+      );
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+// ── Login directo contra Spring Boot ──────────────────────────────────────
 export async function login(email, password) {
-  if (!supabaseConfigured || !supabase) {
-    throw Object.assign(new Error('supabase_not_configured'), {
-      response: {
-        data: {
-          message:
-            'Supabase no está configurado. Agrega VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en frontend/.env',
-        },
-      },
-    });
-  }
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    throw Object.assign(new Error(error.message), {
-      response: { data: { message: traducirError(error.message) } },
-    });
-  }
-
-  const token   = data.session.access_token;
-  const usuario = {
-    id:    data.user.id,
-    email: data.user.email,
-    name:
-      data.user.user_metadata?.nombre ||
-      data.user.user_metadata?.full_name ||
-      data.user.email.split('@')[0],
-  };
-
-  return { token, user: usuario };
-}
-
-// ── Registro con Supabase Auth ─────────────────────────────────────────────
-export async function register(email, password, nombre) {
-  if (!supabaseConfigured || !supabase) {
-    throw Object.assign(new Error('supabase_not_configured'), {
-      response: { data: { message: 'Supabase no está configurado.' } },
-    });
-  }
-
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { nombre } },
-  });
-
-  if (error) {
-    throw Object.assign(new Error(error.message), {
-      response: { data: { message: traducirError(error.message) } },
-    });
-  }
-
-  if (!data.session) {
-    throw Object.assign(new Error('confirm_email'), {
-      response: {
-        data: { message: 'Revisa tu correo para confirmar tu cuenta.' },
-      },
-    });
-  }
-
+  const res = await apiClient.post('/auth/login', { email, password });
+  const { token, nombre, rol, email: correo, id } = res.data;
   return {
-    token: data.session.access_token,
-    user: {
-      id:    data.user.id,
-      email: data.user.email,
-      name:  nombre || data.user.email.split('@')[0],
-    },
+    token,
+    user: { id, email: correo, name: nombre, rol },
   };
-}
-
-// ── Cerrar sesión ──────────────────────────────────────────────────────────
-export async function cerrarSesionSupabase() {
-  if (supabase) await supabase.auth.signOut();
-  cerrarSesion();
 }
 
 // ── Helpers de sesión local ────────────────────────────────────────────────
@@ -122,19 +98,7 @@ export function haySession() {
   return !!localStorage.getItem('token');
 }
 
-// ── Traducciones de errores de Supabase ───────────────────────────────────
-function traducirError(msg) {
-  if (!msg) return 'Error desconocido.';
-  const m = msg.toLowerCase();
-  if (m.includes('invalid login') || m.includes('invalid credentials'))
-    return 'Correo o contraseña incorrectos.';
-  if (m.includes('email not confirmed'))
-    return 'Confirma tu correo antes de ingresar.';
-  if (m.includes('user already registered'))
-    return 'Este correo ya está registrado.';
-  if (m.includes('password'))
-    return 'La contraseña debe tener al menos 6 caracteres.';
-  if (m.includes('rate limit'))
-    return 'Demasiados intentos. Espera unos minutos.';
-  return msg;
+// Alias para compatibilidad con AuthContext
+export async function cerrarSesionSupabase() {
+  cerrarSesion();
 }

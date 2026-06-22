@@ -44,7 +44,7 @@ public class Usuario implements UserDetails {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     /* ── Enum ── */
-    public enum Rol { CLIENTE, ADMIN }
+    public enum Rol { CLIENTE, ASESOR, JEFE_REGIONAL, RIESGOS, COMITE, GERENCIA, ADMIN }
 
     /* ── UserDetails ── */
     @Override

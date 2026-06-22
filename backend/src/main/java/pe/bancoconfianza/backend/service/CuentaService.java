@@ -40,13 +40,19 @@ public class CuentaService {
                 .toList();
     }
 
-    /** Devuelve los últimos 10 movimientos de una cuenta del usuario. */
-    public List<MovimientoDto> getMovimientos(Long cuentaId, String email) {
+    /** Devuelve los últimos N movimientos de una cuenta del usuario. */
+    public List<MovimientoDto> getMovimientos(Long cuentaId, String email, int limit) {
         Cuenta cuenta = findCuentaDelUsuario(cuentaId, email);
-        return movimientoRepository.findTop10ByCuentaOrderByCreatedAtDesc(cuenta)
+        return movimientoRepository.findByCuentaOrderByCreatedAtDesc(
+                cuenta, org.springframework.data.domain.PageRequest.of(0, Math.min(limit, 100)))
                 .stream()
                 .map(MovimientoDto::from)
                 .toList();
+    }
+
+    /** Compatibilidad backward — devuelve top 20 */
+    public List<MovimientoDto> getMovimientos(Long cuentaId, String email) {
+        return getMovimientos(cuentaId, email, 20);
     }
 
     /** Realiza una transferencia entre dos cuentas. */

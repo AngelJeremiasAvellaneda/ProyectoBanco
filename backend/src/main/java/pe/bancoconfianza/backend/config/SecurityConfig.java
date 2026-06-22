@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,7 +22,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import pe.bancoconfianza.backend.security.JwtAuthFilter;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.util.List;
 
@@ -30,14 +33,14 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+    private final ObjectProvider<OncePerRequestFilter> jwtAuthFilterProvider;
     private final UserDetailsService userDetailsService;
     private final CorsProperties corsProperties;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+    public SecurityConfig(@Qualifier("jwtAuthFilter") ObjectProvider<OncePerRequestFilter> jwtAuthFilterProvider,
                           UserDetailsService userDetailsService,
                           CorsProperties corsProperties) {
-        this.jwtAuthFilter = jwtAuthFilter;
+        this.jwtAuthFilterProvider = jwtAuthFilterProvider;
         this.userDetailsService = userDetailsService;
         this.corsProperties = corsProperties;
     }
@@ -47,17 +50,17 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
-            // Permite frames para la consola H2 (solo en dev)
-            .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+            // Permite frames para la consola H2 (solo en dev) - DESHABILITADO porque usamos PostgreSQL
+            // .headers(h -> h.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .authorizeHttpRequests(auth -> auth
                 // Preflight CORS — debe ser lo primero
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints
                 .requestMatchers(
                     "/api/auth/**",
+                    "/api/dev/**",
                     "/api/public/**",
-                    "/actuator/health",
-                    "/h2-console/**"
+                    "/actuator/health"
                 ).permitAll()
                 // Everything else requires authentication
                 .anyRequest().authenticated()
@@ -65,8 +68,12 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .authenticationProvider(authenticationProvider());
+
+        OncePerRequestFilter jwtAuthFilter = jwtAuthFilterProvider.getIfAvailable();
+        if (jwtAuthFilter != null) {
+            http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        }
 
         return http.build();
     }
@@ -95,8 +102,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager() {
+        // Construimos explícitamente un AuthenticationManager usando el DaoAuthenticationProvider
+        return new ProviderManager(List.of(authenticationProvider()));
     }
 
     @Bean

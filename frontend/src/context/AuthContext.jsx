@@ -3,9 +3,9 @@ import {
   obtenerSesion,
   cerrarSesion,
   guardarSesion,
-  cerrarSesionSupabase,
+  apiClient,
 } from '../services/authService';
-import { supabase } from '../lib/supabase';
+import { useSessionTimeout } from '../shared/hooks/useSessionTimeout';
 
 const AuthContext = createContext(null);
 
@@ -13,39 +13,47 @@ export function AuthProvider({ children }) {
   const [sesion, setSesion]     = useState(null);
   const [cargando, setCargando] = useState(true);
 
+  // Auto-logout después de 15 minutos de inactividad
+  const handleSessionTimeout = () => {
+    console.warn('⏰ Sesión expirada por inactividad');
+    cerrarSesion();
+    setSesion(null);
+    window.location.href = '/login?timeout=true';
+  };
+
+  useSessionTimeout(15, handleSessionTimeout, !!sesion);
+
   useEffect(() => {
-    // Carga sesión guardada en localStorage
     setSesion(obtenerSesion());
     setCargando(false);
-
-    // Escucha cambios de sesión de Supabase solo si está configurado
-    if (!supabase) return;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-          cerrarSesion();
-          setSesion(null);
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          const usuario = JSON.parse(localStorage.getItem('usuario') || 'null');
-          if (usuario) {
-            guardarSesion(session.access_token, usuario);
-            setSesion({ token: session.access_token, usuario });
-          }
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
   }, []);
 
+  /**
+   * Guarda la sesión y carga el perfil del backend (incluye rol RBAC).
+   */
   function iniciarSesion(token, usuario) {
     guardarSesion(token, usuario);
     setSesion({ token, usuario });
+
+    // Si el rol ya vino en la respuesta del login no hace falta otro request
+    if (usuario.rol) return;
+
+    // Enriquece el perfil con el rol del backend (async, no bloquea)
+    apiClient.get('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      const usuarioConRol = { ...usuario, rol: res.data.rol, nombre: res.data.nombre };
+      guardarSesion(token, usuarioConRol);
+      setSesion({ token, usuario: usuarioConRol });
+    }).catch(() => {
+      const usuarioConRol = { ...usuario, rol: 'CLIENTE' };
+      guardarSesion(token, usuarioConRol);
+      setSesion({ token, usuario: usuarioConRol });
+    });
   }
 
-  async function salir() {
-    await cerrarSesionSupabase();
+  function salir() {
+    cerrarSesion();
     setSesion(null);
   }
 
