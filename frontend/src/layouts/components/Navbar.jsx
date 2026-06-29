@@ -502,7 +502,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 <>
-                  <button onClick={() => navigate('/login')}
+                  <button onClick={() => navigate('/apertura-cuenta')}
                     className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all border"
                     style={{ borderColor: dark ? '#0052FF' : '#003087', color: dark ? '#4D9FFF' : '#003087' }}
                     onMouseEnter={e => e.currentTarget.style.background = hoverBg}

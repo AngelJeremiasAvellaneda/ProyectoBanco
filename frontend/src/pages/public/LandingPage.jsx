@@ -27,10 +27,10 @@ function BcpImage({ src, alt, className, style, fallback }) {
 /* ─── Hero slides — con soporte de imagen ─── */
 const SLIDES = [
   {
-    title: 'Ahorra hoy y disfruta\n',
-    titleAccent: 'tu depa mañana',
-    sub: 'Cada 100 soles adicionales es una opción para participar',
-    cta: 'Regístrate aquí',
+    title: 'Abre tu cuenta de ahorros\n',
+    titleAccent: 'desde casa 24/7',
+    sub: 'Sin costo y en minutos. Solo necesitas tu DNI y tarjeta.',
+    cta: 'Abrir tu Cuenta',
     img: '/src/assets/images/hero/hero-depa.png',
     bgLight: '#dce8f5',
     bgDark:  '#0D1A3A',
@@ -60,7 +60,7 @@ const SLIDES = [
 
 /* ─── Accesos rápidos — iconos Lucide ─── */
 const ACCESOS = [
-  { Icon: Landmark,    label: 'Abre una\ncuenta',      to: '/productos/cuentas',              color: '#003087' },
+  { Icon: Landmark,    label: 'Abre una\ncuenta',      to: '/apertura-cuenta',                   color: '#003087' },
   { Icon: CreditCard,  label: 'Obtén una\nTarjeta',    to: '/productos/tarjetas',             color: '#F47920' },
   { Icon: TrendingUp,  label: 'Solicita un\nPréstamo', to: '/simulador',                      color: '#059669' },
   { Icon: BarChart3,   label: 'Ahorra en\nun Fondo',   to: '/productos/inversiones',          color: '#7c3aed' },
@@ -209,7 +209,7 @@ export default function LandingPage() {
             </h1>
             <p className="text-sm sm:text-base max-w-md" style={{ color: textSub }}>{current.sub}</p>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => navigate(sesion ? '/dashboard' : '/login')}
+              <button onClick={() => navigate(sesion ? '/dashboard' : '/apertura-cuenta')}
                 className="text-white px-6 sm:px-7 py-2.5 sm:py-3 rounded-full font-bold text-sm shadow-lg hover:opacity-90 transition-all"
                 style={{ background: current.accent }}>
                 {sesion ? 'Ir a mi panel' : current.cta}

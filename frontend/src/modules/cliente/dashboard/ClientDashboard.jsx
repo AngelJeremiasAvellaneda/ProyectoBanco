@@ -301,11 +301,11 @@ export default function ClientDashboard() {
   /* ── gráfica evolución saldo (30 días sintética + real) ── */
   const saldoData = useMemo(() => {
     if (todosMovs.length === 0) {
-      // demo: curva ascendente suave
-      const base = saldoTotal > 0 ? saldoTotal : 5000;
+      // sin movimientos, retornar array vacío o saldo actual
+      const base = saldoTotal > 0 ? saldoTotal : 0;
       return Array.from({ length: 30 }, (_, i) => ({
         dia: `${i + 1}`,
-        saldo: Math.round(base * (0.75 + (i / 30) * 0.25) + Math.sin(i * 0.6) * base * 0.04),
+        saldo: base,
       }));
     }
     // reconstruir saldo histórico hacia atrás
@@ -338,12 +338,7 @@ export default function ClientDashboard() {
   const gastosData = useMemo(() => {
     const debitos = todosMovs.filter(m => getMovMeta(m.tipo).esDebito);
     if (debitos.length === 0) {
-      return [
-        { name: 'Transferencias', value: 45, color: CAT_COLORS.Transferencias },
-        { name: 'Servicios',      value: 28, color: CAT_COLORS.Servicios },
-        { name: 'Créditos',       value: 18, color: CAT_COLORS.Créditos },
-        { name: 'Retiros',        value: 9,  color: CAT_COLORS.Retiros },
-      ];
+      return [];
     }
     const cats = {};
     debitos.forEach(m => {
@@ -358,18 +353,12 @@ export default function ClientDashboard() {
 
   /* ── sparklines por cuenta ─────────── */
   const sparkData = useMemo(() => {
-    if (todosMovs.length < 3) {
-      // demo spark
-      return [
-        Array.from({ length: 10 }, (_, i) => ({ v: 4000 + Math.sin(i) * 500 + i * 80 })),
-      ];
-    }
     return cuentas.map(() =>
       Array.from({ length: 10 }, (_, i) => ({
         v: saldoTotal * (0.8 + i * 0.02 + Math.sin(i * 0.8) * 0.05),
       }))
     );
-  }, [cuentas, todosMovs, saldoTotal]);
+  }, [cuentas, saldoTotal]);
 
   /* ── saldo vs mes anterior ─────────── */
   const saldoAnterior = saldoData[0]?.saldo ?? saldoTotal;

@@ -79,12 +79,10 @@ const ACCION_COLOR = {
   USUARIO_CREACION:     '#0052FF',
 };
 
-/* ── seed actividad por hora — solo fallback si API falla ─ */
+/* ── actividad por hora — solo datos reales del API ─ */
 const HORAS_FALLBACK = Array.from({ length: 24 }, (_, h) => ({
   hora: `${String(h).padStart(2, '0')}h`,
-  eventos: h >= 8 && h <= 18
-    ? Math.floor(20 + Math.sin((h - 8) * 0.5) * 30 + (h === 12 || h === 14 ? 30 : 0))
-    : Math.floor(Math.random() * 5),
+  eventos: 0,
 }));
 
 /* ── KPI Card gradient ─────────────────────────── */
@@ -139,7 +137,6 @@ export default function AdminDashboard() {
   const [usuarios,    setUsuarios]    = useState([]);
   const [eventos,     setEventos]     = useState([]);
   const [horaData,    setHoraData]    = useState(HORAS_FALLBACK);
-  const [horaEsReal,  setHoraEsReal]  = useState(false);
   const [loading,     setLoading]     = useState(true);
 
   const nombre = sesion?.usuario?.nombre ?? sesion?.usuario?.name ?? 'Admin';
@@ -151,7 +148,6 @@ export default function AdminDashboard() {
         if (aRes.status === 'fulfilled') setEventos(aRes.value);
         if (hRes.status === 'fulfilled' && hRes.value?.porHora) {
           setHoraData(hRes.value.porHora);
-          setHoraEsReal(!hRes.value.esDemoData);
         }
       })
       .finally(() => setLoading(false));
@@ -186,15 +182,7 @@ export default function AdminDashboard() {
       .sort((a, b) => b.value - a.value);
 
     if (data.length === 0) {
-      return [
-        { name: 'CLIENTE',       value: 96, color: ROL_COLOR.CLIENTE },
-        { name: 'ASESOR',        value: 24, color: ROL_COLOR.ASESOR },
-        { name: 'JEFE_REGIONAL', value: 8,  color: ROL_COLOR.JEFE_REGIONAL },
-        { name: 'RIESGOS',       value: 6,  color: ROL_COLOR.RIESGOS },
-        { name: 'COMITE',        value: 4,  color: ROL_COLOR.COMITE },
-        { name: 'GERENCIA',      value: 3,  color: ROL_COLOR.GERENCIA },
-        { name: 'ADMIN',         value: 1,  color: ROL_COLOR.ADMIN },
-      ];
+      return [];
     }
     return data;
   }, [usuarios]);
@@ -255,28 +243,28 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             label="Usuarios registrados"
-            value={usuarios.length || 142}
-            sub={`${activos || 138} activos · ${(usuarios.length || 142) - (activos || 138)} inactivos`}
+            value={usuarios.length}
+            sub={`${activos} activos · ${usuarios.length - activos} inactivos`}
             icon={Users}
             gradient="linear-gradient(135deg,#0052FF,#003087)"
           />
           <KpiCard
             label="Logins de hoy"
-            value={loginsHoy || eventosHoy.length || 38}
-            sub={`${eventosHoy.length || 284} operaciones en 24h`}
+            value={loginsHoy}
+            sub={`${eventosHoy.length} operaciones en 24h`}
             icon={Globe}
             gradient="linear-gradient(135deg,#059669,#047857)"
           />
           <KpiCard
             label="Roles activos"
-            value={new Set(usuarios.map(u => u.rol)).size || 8}
+            value={new Set(usuarios.map(u => u.rol)).size}
             sub="Perfiles de acceso configurados"
             icon={Lock}
             gradient="linear-gradient(135deg,#7c3aed,#5b21b6)"
           />
           <KpiCard
             label="Eventos críticos hoy"
-            value={erroresHoy || criticos.length > 0 ? erroresHoy : 3}
+            value={erroresHoy}
             sub="Acciones que requieren revisión"
             icon={AlertTriangle}
             gradient={erroresHoy > 5
@@ -294,7 +282,7 @@ export default function AdminDashboard() {
             <div className="mb-4">
               <h3 className="text-sm font-bold" style={{ color: textH }}>Distribución de Usuarios por Rol</h3>
               <p className="text-xs mt-0.5" style={{ color: textM }}>
-                Total: {usuarios.length || rolData.reduce((a, d) => a + d.value, 0)} usuarios registrados
+                Total: {usuarios.length} usuarios registrados
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4 items-center">

@@ -114,7 +114,7 @@ public class CuentaService {
 
         Cuenta cuenta = new Cuenta();
         cuenta.setNumeroCuenta(generarNumeroCuenta());
-        cuenta.setTipo(Cuenta.TipoCuenta.AHORROS);
+        cuenta.setTipoCuenta(Cuenta.TipoCuenta.AHORROS);
         cuenta.setSaldo(new BigDecimal("1000.00"));
         cuenta.setMoneda("PEN");
         cuenta.setUsuario(usuario);

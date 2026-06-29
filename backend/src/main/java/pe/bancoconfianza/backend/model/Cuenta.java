@@ -15,18 +15,24 @@ public class Cuenta {
     @Column(name = "numero_cuenta", nullable = false, unique = true, length = 20)
     private String numeroCuenta;
 
+    @Column(name = "cci", unique = true, length = 20)
+    private String cci;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoCuenta tipo = TipoCuenta.AHORROS;
+    @Column(name = "tipo_cuenta", nullable = false)
+    private TipoCuenta tipoCuenta = TipoCuenta.AHORROS;
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal saldo = BigDecimal.ZERO;
 
     @Column(nullable = false)
-    private String moneda = "PEN";
+    private String moneda = "SOLES";
 
     @Column(nullable = false)
     private boolean activa = true;
+
+    @Column(name = "fecha_apertura")
+    private LocalDateTime fechaApertura = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)
@@ -35,7 +41,7 @@ public class Cuenta {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public enum TipoCuenta { AHORROS, CORRIENTE }
+    public enum TipoCuenta { AHORROS, CORRIENTE, DIGITAL, SUELDO, PREMIO, ILIMITADA, CTS }
 
     /* ── Getters / Setters ── */
     public Long getId()                        { return id; }
@@ -44,8 +50,11 @@ public class Cuenta {
     public String getNumeroCuenta()            { return numeroCuenta; }
     public void setNumeroCuenta(String n)      { this.numeroCuenta = n; }
 
-    public TipoCuenta getTipo()                { return tipo; }
-    public void setTipo(TipoCuenta tipo)       { this.tipo = tipo; }
+    public String getCci()                     { return cci; }
+    public void setCci(String cci)             { this.cci = cci; }
+
+    public TipoCuenta getTipoCuenta()          { return tipoCuenta; }
+    public void setTipoCuenta(TipoCuenta tipo) { this.tipoCuenta = tipo; }
 
     public BigDecimal getSaldo()               { return saldo; }
     public void setSaldo(BigDecimal saldo)     { this.saldo = saldo; }
@@ -55,6 +64,9 @@ public class Cuenta {
 
     public boolean isActiva()                  { return activa; }
     public void setActiva(boolean activa)      { this.activa = activa; }
+
+    public LocalDateTime getFechaApertura()    { return fechaApertura; }
+    public void setFechaApertura(LocalDateTime fecha) { this.fechaApertura = fecha; }
 
     public Usuario getUsuario()                { return usuario; }
     public void setUsuario(Usuario usuario)    { this.usuario = usuario; }

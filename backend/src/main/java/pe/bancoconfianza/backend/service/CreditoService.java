@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.bancoconfianza.backend.dto.CreditoDto;
 import pe.bancoconfianza.backend.dto.CuotaDto;
 import pe.bancoconfianza.backend.dto.ResolucionCreditoRequest;
+import pe.bancoconfianza.backend.dto.SimulacionCreditoDto;
 import pe.bancoconfianza.backend.dto.SolicitudCreditoRequest;
 import pe.bancoconfianza.backend.model.*;
 import pe.bancoconfianza.backend.model.Credito.*;
@@ -78,6 +79,77 @@ public class CreditoService {
     }
 
     // ════════════════════════════════════════════════════════════
+    // SIMULACIÓN: PRE-VISUALIZACIÓN SIN GUARDAR
+    // ════════════════════════════════════════════════════════════
+
+    /**
+     * Simula un crédito sin guardarlo en BD.
+     * Útil para que el cliente vea la evaluación, scoring y RDS antes de confirmar.
+     */
+    public SimulacionCreditoDto simularCredito(SolicitudCreditoRequest req, String emailCliente) {
+        Usuario cliente = findUsuario(emailCliente);
+
+        // Validar que la cuenta existe y pertenece al cliente
+        Cuenta cuentaDesembolso = cuentaRepo.findByNumeroCuenta(req.cuentaDesembolsoNumero())
+            .orElseThrow(() -> new IllegalArgumentException("Cuenta de desembolso no encontrada."));
+
+        if (!cuentaDesembolso.getUsuario().getEmail().equals(emailCliente)) {
+            throw new SecurityException("La cuenta de desembolso no pertenece al cliente.");
+        }
+
+        // Calcular score
+        int score = calcularScore(cliente, req);
+
+        // TEA según producto
+        BigDecimal tea = teaPorTipo(TipoProducto.valueOf(req.tipoProducto()));
+
+        // Cuota mensual
+        BigDecimal cuotaMensual = calcularCuotaMensual(req.montoSolicitado(), tea, req.plazoMeses());
+
+        // RDS
+        BigDecimal deudaTotal = req.deudaTotalVigente() != null ? req.deudaTotalVigente() : BigDecimal.ZERO;
+        BigDecimal deudaTotalConCuota = deudaTotal.add(cuotaMensual);
+        BigDecimal rds = deudaTotalConCuota.divide(req.ingresoMensual(), 4, java.math.RoundingMode.HALF_UP);
+        SemaforoRds semaforo = semaforo(rds);
+
+        // Elegibilidad
+        boolean elegible = esElegible(score, rds, semaforo);
+
+        // Ruta de aprobación
+        RutaAprobacion ruta = rutaAprobacion(req.montoSolicitado());
+        EstadoCredito estado;
+        String comentario;
+
+        if (!elegible) {
+            estado = EstadoCredito.RECHAZADO;
+            comentario = buildMotivoRechazo(score, rds, semaforo);
+        } else if (ruta == RutaAprobacion.ASESOR && score >= 700) {
+            estado = EstadoCredito.APROBADO;
+            comentario = "Aprobado automáticamente — Score " + score + ", RDS " + rds.multiply(new BigDecimal("100")).setScale(1, java.math.RoundingMode.HALF_UP) + "%";
+        } else {
+            estado = mapRutaToEstado(ruta);
+            comentario = "En evaluación — Ruta: " + ruta;
+        }
+
+        return new SimulacionCreditoDto(
+            req.tipoProducto(),
+            req.montoSolicitado(),
+            req.plazoMeses(),
+            tea,
+            cuotaMensual,
+            req.ingresoMensual(),
+            deudaTotal,
+            rds.multiply(new BigDecimal("100")).setScale(2, java.math.RoundingMode.HALF_UP),
+            semaforo.name(),
+            score,
+            elegible,
+            ruta != null ? ruta.name() : null,
+            estado.name(),
+            comentario
+        );
+    }
+
+    // ════════════════════════════════════════════════════════════
     // CRITERIO 1: SOLICITUD DESDE HOMEBANKING
     // ════════════════════════════════════════════════════════════
 
@@ -90,12 +162,32 @@ public class CreditoService {
     public CreditoDto solicitarCredito(SolicitudCreditoRequest req, String emailCliente) {
         Usuario cliente = findUsuario(emailCliente);
 
-        Cuenta cuentaDesembolso = cuentaRepo.findByNumeroCuenta(req.cuentaDesembolsoNumero())
-            .orElseThrow(() -> new IllegalArgumentException("Cuenta de desembolso no encontrada."));
+        log.info("[Credito] Solicitud de {}: cuenta={}, monto={}", 
+            emailCliente, req.cuentaDesembolsoNumero(), req.montoSolicitado());
 
-        if (!cuentaDesembolso.getUsuario().getEmail().equals(emailCliente)) {
-            throw new SecurityException("La cuenta de desembolso no pertenece al cliente.");
+        if (req.cuentaDesembolsoNumero() == null || req.cuentaDesembolsoNumero().trim().isEmpty()) {
+            log.warn("[Credito] Cuenta vacía para {}", emailCliente);
+            throw new IllegalArgumentException("Debe seleccionar una cuenta de desembolso.");
         }
+
+        // ⭐ VALIDACIÓN COMPLETA EN UN QUERY: número + usuario + activa
+        Cuenta cuentaDesembolso = cuentaRepo
+            .findByNumeroCuentaAndUsuarioIdAndActivaTrue(
+                req.cuentaDesembolsoNumero().trim(),
+                cliente.getId()
+            )
+            .orElseThrow(() -> {
+                log.warn("[Credito] Validación de cuenta FALLÓ — número={}, usuario_id={}, activa=true", 
+                    req.cuentaDesembolsoNumero(), cliente.getId());
+                return new IllegalArgumentException(
+                    "Selecciona una cuenta válida y activa. La cuenta proporcionada no existe o está inactiva."
+                );
+            });
+
+        log.debug("[Credito] ✓ Cuenta desembolso validada: id={}, número={}, saldo={}", 
+            cuentaDesembolso.getId(), 
+            cuentaDesembolso.getNumeroCuenta(), 
+            cuentaDesembolso.getSaldo());
 
         // ── 1. Crear solicitud ──────────────────────────────────
         Credito credito = new Credito();
@@ -145,14 +237,9 @@ public class CreditoService {
         RutaAprobacion ruta = rutaAprobacion(req.montoSolicitado());
         credito.setRutaAprobacion(ruta);
 
-        // Si la ruta es ASESOR y el score es bueno → pre-aprobado directo
-        if (ruta == RutaAprobacion.ASESOR && score >= 700) {
-            credito.setEstado(EstadoCredito.APROBADO);
-            credito.setMontoAprobado(req.montoSolicitado());
-            credito.setComentarioEvaluacion("Aprobado automáticamente — Score " + score + ", RDS " + rds.scaleByPowerOfTen(2).intValue() + "%");
-        } else {
-            credito.setEstado(mapRutaToEstado(ruta));
-        }
+        // Si la ruta es ASESOR → estado EN_EVALUACION (asesor lo evaluará)
+        // La auto-aprobación ocurre cuando el asesor resuelve (si score >= 700)
+        credito.setEstado(mapRutaToEstado(ruta));
 
         // ── Auditoría ────────────────────────────────────────
         CreditoDto resultado = CreditoDto.from(creditoRepo.save(credito));
@@ -205,6 +292,9 @@ public class CreditoService {
     /**
      * Resolución por un actor del Core (aprobar / rechazar).
      * Valida que el rol del actor sea competente para el estado actual.
+     * 
+     * Si se aprueba un crédito con monto ≤ S/5000 (ruta ASESOR),
+     * se desembolsa automáticamente.
      */
     @Transactional
     public CreditoDto resolverCredito(Long id, ResolucionCreditoRequest req, String emailActor) {
@@ -213,11 +303,28 @@ public class CreditoService {
 
         assertPuedeResolver(credito, actor);
 
+        // ⭐ AUDITORÍA: Registrar quién está resolviendo
         credito.setAprobadoPor(actor);
+        if (credito.getAsesor() == null) {
+            credito.setAsesor(actor);
+            log.info("[Credito] Asesor asignado: {} para crédito {}", actor.getEmail(), credito.getNumeroOperacion());
+        }
+        
         credito.setComentarioEvaluacion(req.comentario());
         credito.setUpdatedAt(LocalDateTime.now());
 
-        if (req.aprobado()) {
+        // ⭐ AUTO-APROBACIÓN: Si es ASESOR y score >= 700, aprobar automáticamente
+        boolean autoAprobado = false;
+        if (credito.getRutaAprobacion() == RutaAprobacion.ASESOR && credito.getScoreCrediticio() >= 700) {
+            credito.setEstado(EstadoCredito.APROBADO);
+            credito.setMontoAprobado(credito.getMontoSolicitado());
+            credito.setComentarioEvaluacion("Aprobado automáticamente — Score " + credito.getScoreCrediticio() + 
+                ", RDS " + (credito.getRdsRatio().multiply(new BigDecimal("100")).setScale(1, RoundingMode.HALF_UP)) + "%");
+            autoAprobado = true;
+            log.info("[Credito] Auto-APROBADO: {} (Score {}, RDS {}%)", 
+                credito.getNumeroOperacion(), credito.getScoreCrediticio(), 
+                credito.getRdsRatio().multiply(new BigDecimal("100")).setScale(1, RoundingMode.HALF_UP));
+        } else if (req.aprobado()) {
             BigDecimal montoAprobado = req.montoAprobado() != null
                 ? req.montoAprobado() : credito.getMontoSolicitado();
             credito.setMontoAprobado(montoAprobado);
@@ -228,17 +335,27 @@ public class CreditoService {
                 );
             }
             credito.setEstado(EstadoCredito.APROBADO);
+            log.info("[Credito] Crédito APROBADO por asesor: {} por {} ({})", credito.getNumeroOperacion(), actor.getNombre(), actor.getRol().name());
         } else {
             credito.setEstado(EstadoCredito.RECHAZADO);
+            log.info("[Credito] Crédito RECHAZADO: {} por {} ({})", credito.getNumeroOperacion(), actor.getNombre(), actor.getRol().name());
         }
 
         CreditoDto resolvResult = CreditoDto.from(creditoRepo.save(credito));
         auditoriaService.registrar(
             emailActor, actor.getRol().name(),
-            req.aprobado() ? AuditoriaEvento.TipoAccion.CREDITO_APROBACION : AuditoriaEvento.TipoAccion.CREDITO_RECHAZO,
-            "CREDITO", (req.aprobado() ? "Aprobado" : "Rechazado") + ": " + credito.getNumeroOperacion() + " — " + req.comentario(),
+            (req.aprobado() || autoAprobado) ? AuditoriaEvento.TipoAccion.CREDITO_APROBACION : AuditoriaEvento.TipoAccion.CREDITO_RECHAZO,
+            "CREDITO", (req.aprobado() || autoAprobado ? "Aprobado" : "Rechazado") + ": " + credito.getNumeroOperacion() + " — " + (req.comentario() != null ? req.comentario() : "Auto-aprobación automática"),
             id
         );
+
+        // Auto-desembolsar si ruta es ASESOR (monto <= S/ 5000) O auto-aprobado
+        if ((req.aprobado() || autoAprobado) && credito.getRutaAprobacion() == RutaAprobacion.ASESOR) {
+            log.info("[Auto-Desembolso] Desembolsando automáticamente crédito {} (ruta ASESOR)", credito.getNumeroOperacion());
+            desembolsar(id, emailActor);
+            return CreditoDto.from(findCredito(id));
+        }
+
         return resolvResult;
     }
 

@@ -22,4 +22,26 @@ export default defineConfig({
       '@/assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  build: {
+    // Optimizar bundle para producción
+    sourcemap: false, // No incluir source maps en producción
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Code splitting para mejor caching
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendors';
+            }
+            if (id.includes('recharts')) {
+              return 'chart-vendors';
+            }
+            if (id.includes('lucide-react') || id.includes('tailwindcss')) {
+              return 'ui-vendors';
+            }
+          }
+        },
+      },
+    },
+  },
 })

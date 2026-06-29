@@ -1,8 +1,10 @@
 /**
  * Endpoints de la API backend.
  * Fuente única de verdad — no hardcodear paths en servicios.
+ * 
+ * Usa VITE_API_URL del .env — fallback a localhost para desarrollo.
  */
-export const API_BASE = 'http://localhost:8080/api';
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export const API = {
   // Auth

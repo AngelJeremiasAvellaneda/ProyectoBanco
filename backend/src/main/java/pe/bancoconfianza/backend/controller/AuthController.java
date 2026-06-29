@@ -21,6 +21,7 @@ import pe.bancoconfianza.backend.service.AuditoriaService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 /**
@@ -93,6 +94,72 @@ public class AuthController {
             usuario.getEmail(),
             usuario.getRol().name()
         ));
+    }
+
+    /** POST /api/auth/login-tarjeta — login con tarjeta + clave */
+    @PostMapping("/login-tarjeta")
+    public ResponseEntity<?> loginTarjeta(@RequestBody Map<String, String> body) {
+        try {
+            String numeroTarjeta = body.get("numeroTarjeta");
+            String clave = body.get("clave");
+            
+            System.out.println("=== [LOGIN TARJETA] ===");
+            System.out.println("Tarjeta: " + numeroTarjeta);
+            System.out.println("Clave: " + (clave != null ? "***" : "null"));
+            
+            if (numeroTarjeta == null || clave == null) {
+                System.out.println("ERROR: Parámetros nulos");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "mensaje", "Parámetros incompletos"
+                ));
+            }
+            
+            System.out.println("Buscando usuario por tarjeta...");
+            var optUsuario = usuarioRepository.findByNumeroTarjeta(numeroTarjeta);
+            if (optUsuario.isEmpty()) {
+                System.out.println("ERROR: Tarjeta no encontrada");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "mensaje", "Tarjeta no encontrada"
+                ));
+            }
+            
+            Usuario usuario = optUsuario.get();
+            System.out.println("Usuario encontrado: " + usuario.getEmail());
+            System.out.println("Password hash: " + (usuario.getPassword() != null ? "exists" : "null"));
+            
+            boolean matches = usuario.getPassword() != null && passwordEncoder.matches(clave, usuario.getPassword());
+            System.out.println("Password matches: " + matches);
+            
+            if (!matches) {
+                System.out.println("ERROR: Clave incorrecta");
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "mensaje", "Clave incorrecta"
+                ));
+            }
+
+            System.out.println("Generando token...");
+            String token = jwtService.generateToken(usuario.getEmail(), jwtProperties.getExpirationMs());
+            System.out.println("Token generado exitosamente");
+            
+            return ResponseEntity.ok(new AuthResponse(
+                token,
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getRol().name()
+            ));
+        } catch (Exception e) {
+            System.out.println("=== ERROR EN LOGIN TARJETA ===");
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of(
+                "success", false,
+                "mensaje", e.getMessage(),
+                "tipo", e.getClass().getSimpleName()
+            ));
+        }
     }
 
     /** Estado público — confirma que el backend está listo. */

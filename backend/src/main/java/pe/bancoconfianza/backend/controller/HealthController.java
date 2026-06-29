@@ -1,13 +1,10 @@
 package pe.bancoconfianza.backend.controller;
 
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pe.bancoconfianza.backend.repository.UsuarioRepository;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -18,22 +15,15 @@ import java.util.Map;
 @RequestMapping("/api/public")
 public class HealthController {
 
-    private final UsuarioRepository usuarioRepository;
-    private final Environment environment;
-
-    public HealthController(UsuarioRepository usuarioRepository, Environment environment) {
-        this.usuarioRepository = usuarioRepository;
-        this.environment = environment;
+    public HealthController() {
     }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
+        // Only expose minimal health check info — no server internals
         return ResponseEntity.ok(Map.of(
                 "status",    "UP",
-                "service",   "BancoConfianza API",
-                "timestamp", LocalDateTime.now().toString(),
-                "profiles",  String.join(",", environment.getActiveProfiles()),
-                "usuarios",  usuarioRepository.count()
+                "service",   "BancoConfianza API"
         ));
     }
 }

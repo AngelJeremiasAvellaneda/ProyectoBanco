@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Endpoint propio (no requiere actuator, siempre disponible si el backend corre)
-const HEALTH_URL    = 'http://localhost:8080/api/public/health';
-const ACTUATOR_URL  = 'http://localhost:8080/actuator/health';
+// Usa VITE_API_URL del .env, fallback a localhost
+const API_BASE      = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const HEALTH_URL    = `${API_BASE}/public/health`;
+const ACTUATOR_URL  = `${API_BASE.replace('/api', '')}/actuator/health`;
 const POLL_INTERVAL  = 30_000;          // sondeo cada 30 s
 const TOAST_DURATION = 5 * 60 * 1000;  // toast visible 5 minutos
 

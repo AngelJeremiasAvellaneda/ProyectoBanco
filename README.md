@@ -1,279 +1,316 @@
-# BancoConfianza — Home Banking
+# BancoConfianza - Sistema Integral de Banca Digital
 
-**Autor:** Angel Addair Jeremias Avellaneda  
-**Curso:** Desarrollo de Aplicaciones Web  
-**Fecha:** Mayo 2026
-
----
-
-## Descripción
-
-Aplicación web de banca en línea para la financiera BancoConfianza. Permite a los clientes autenticarse, consultar sus cuentas, ver movimientos y acceder a productos financieros desde cualquier dispositivo.
-
-El sistema está compuesto por dos partes independientes que se comunican entre sí:
-
-- **Frontend** — React 19 + Vite + Tailwind CSS
-- **Backend** — Spring Boot 3.3 + Spring Security + JPA
-
-- **Cuenta de prueba** 
-— angel123@gmail.com 
-— angel123
-
-La autenticación se delega completamente a **Supabase Auth**, que emite tokens JWT firmados con RS256. El backend valida esos tokens descargando las claves públicas del endpoint JWKS de Supabase.
+**Estado**: ✅ Producción (v1.0)  
+**Última actualización**: Junio 2026  
+**Tecnología**: Java 21 + Spring Boot 3 + React 18 + PostgreSQL 16
 
 ---
 
-## Arquitectura
+## 📋 Descripción General
+
+BancoConfianza es un **sistema bancario integral** que cubre el flujo completo desde apertura de cuenta digital (Homebanking) hasta recuperaciones de crédito (R2). Implementa:
+
+✅ **Homebanking** - Gestión de cuentas, transferencias, consultas  
+✅ **Créditos** - Solicitud, evaluación, aprobación, desembolso, cuotas  
+✅ **Recuperaciones** - Gestión de mora en 5 bandas (Preventiva → Judicial → Castigo)  
+✅ **RBAC Completo** - 7 roles con permisos segmentados (CLIENTE, ASESOR, JEFE_REGIONAL, RIESGOS, COMITE, GERENCIA, ADMIN)  
+✅ **Auditoría SOC** - Trazabilidad completa de operaciones  
+✅ **Power BI Ready** - Base de datos diseñada para reporting
+
+---
+
+## 🏗️ Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                     NAVEGADOR                           │
-│                                                         │
-│   React 19 (Vite)          Puerto 5173                  │
-│   ├── Supabase Auth SDK  ──────────────► Supabase Cloud │
-│   │   (login / logout)                  (JWT RS256)     │
-│   └── Axios ─────────────────────────► Spring Boot      │
-│       (Bearer JWT en header)            Puerto 8080     │
-└─────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│                  SPRING BOOT BACKEND                    │
-│                                                         │
-│   JwtAuthFilter ──► valida JWT con JWKS de Supabase     │
-│   SecurityConfig ──► rutas públicas / protegidas        │
-│   CuentaController ──► /api/cuentas/**                  │
-│   HealthController ──► /api/public/health               │
-│   H2 (dev) / PostgreSQL Supabase (prod)                 │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Requisitos previos
-
-| Herramienta | Versión mínima | Verificar |
-|---|---|---|
-| Java JDK | 21 | `java -version` |
-| Node.js | 18 | `node -v` |
-| npm | 9 | `npm -v` |
-| Maven Wrapper | incluido | `.\mvnw.cmd --version` |
-
-No se necesita instalar Maven globalmente — el proyecto incluye `mvnw.cmd` que usa la instalación local.
-
----
-
-## Estructura del proyecto
-
-```
-banco/
-├── backend/                    # Spring Boot API
-│   ├── src/main/java/pe/bancoconfianza/backend/
-│   │   ├── config/             # SecurityConfig, CORS, JWT properties, DataInitializer
-│   │   ├── controller/         # AuthController, CuentaController, HealthController
-│   │   ├── dto/                # LoginRequest, AuthResponse, CuentaDto, MovimientoDto
-│   │   ├── exception/          # GlobalExceptionHandler
-│   │   ├── model/              # Usuario, Cuenta, Movimiento
-│   │   ├── repository/         # UsuarioRepository, CuentaRepository, MovimientoRepository
-│   │   ├── security/           # JwtService (valida RS256 Supabase), JwtAuthFilter
-│   │   └── service/            # UsuarioService, CuentaService
-│   ├── src/main/resources/
-│   │   ├── application.properties          # Configuración principal (H2 por defecto)
-│   │   └── application-dev.properties      # Perfil dev con H2 + consola
-│   ├── mvnw.cmd                # Maven Wrapper para Windows
+BancoConfianza/
+├── backend/                      # Java 21 + Spring Boot 3
+│   ├── src/main/java/
+│   │   ├── controller/          # 10 endpoints RESTful
+│   │   ├── service/             # Lógica de negocio (créditos, recuperaciones)
+│   │   ├── model/               # JPA entities (Usuario, Cuenta, Credito, etc.)
+│   │   ├── repository/          # Data access layer
+│   │   ├── config/              # Security, CORS, JWT, DataInitializer
+│   │   └── exception/           # Global error handling
+│   ├── resources/
+│   │   ├── application.yml      # Configuración Spring
+│   │   └── data.sql             # Seed con 15 usuarios de prueba + créditos
 │   └── pom.xml
 │
-├── frontend/                   # React SPA
+├── frontend/                     # React 18 + Vite
 │   ├── src/
-│   │   ├── components/         # Navbar, Footer, ProtectedRoute, BackendStatusWidget
-│   │   ├── context/            # AuthContext, ThemeContext
-│   │   ├── hooks/              # useBackendStatus
-│   │   ├── lib/                # supabase.js (cliente Supabase)
-│   │   ├── pages/              # LandingPage, LoginPage, DashboardPage, ...
-│   │   └── services/           # authService.js (login/logout con Supabase)
-│   ├── .env                    # Variables de entorno (VITE_SUPABASE_URL, etc.)
+│   │   ├── modules/             # Dashboards por rol (CLIENTE, ASESOR, JEFE, etc.)
+│   │   ├── services/            # API calls (authService, creditoService, etc.)
+│   │   ├── context/             # Auth, Theme, Toast contexts
+│   │   └── shared/              # Componentes reutilizables
 │   └── package.json
 │
-└── README.md                   # Este archivo
+└── README.md                     # Este archivo
 ```
 
 ---
 
-## Configuración inicial
+## 🚀 Instalación y Ejecución
 
-### 1. Variables de entorno del frontend
+### **Backend**
 
-Edita `frontend/.env`:
+```bash
+cd backend/
 
-```env
-VITE_SUPABASE_URL=https://utdlprovegxdjjgsykxl.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_rNBB2yKCL5MqvaR511Ef2A_QsfqlNAM
+# Compilar y ejecutar
+./mvnw clean spring-boot:run
+
+# O si prefieres JAR
+./mvnw clean package
+java -jar target/homebanking-backend.jar
 ```
 
-Estos valores se obtienen en: **Supabase Dashboard → Project Settings → API**
+**Requisitos**:
+- Java 21+
+- Maven 3.9+
+- PostgreSQL 16+ (configurado en `application.yml`)
 
-### 2. Variables de entorno del backend (opcional)
-
-El backend funciona con H2 en memoria por defecto. Si quieres conectar a Supabase PostgreSQL, define estas variables de entorno antes de levantar:
-
-```env
-SUPABASE_DB_URL=jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require
-SUPABASE_DB_USER=postgres.utdlprovegxdjjgsykxl
-SUPABASE_DB_PASSWORD=tu_password
-SUPABASE_URL=https://utdlprovegxdjjgsykxl.supabase.co
-```
+**Puerto**: http://localhost:8080
 
 ---
 
-## Ejecución
+### **Frontend**
 
-Se necesitan **dos terminales** abiertas simultáneamente.
+```bash
+cd frontend/
 
-### Terminal 1 — Backend (Spring Boot)
-
-```cmd
-cd backend
-.\mvnw.cmd spring-boot:run
-```
-
-El servidor arranca en `http://localhost:8080`.  
-Verifica que está corriendo: `http://localhost:8080/api/public/health`
-
-Respuesta esperada:
-```json
-{
-  "status": "UP",
-  "service": "BancoConfianza API",
-  "usuarios": 1
-}
-```
-
-### Terminal 2 — Frontend (React + Vite)
-
-```cmd
-cd frontend
+# Instalar dependencias
 npm install
+
+# Desarrollo (hot-reload)
 npm run dev
+
+# Producción
+npm run build
+npm run preview
 ```
 
-La aplicación abre en `http://localhost:5173`.
+**Requisitos**:
+- Node.js 18+
+- npm 9+
+
+**Puerto**: http://localhost:5173
 
 ---
 
-## Flujo de uso
+## 🔐 Seguridad
 
+- **JWT** para autenticación stateless
+- **BCrypt** para hash de contraseñas
+- **CORS** configurado para localhost (dev) y dominio producción
+- **RBAC** con 7 roles y permisos granulares
+- **SQL Injection Prevention** con JPA parameterizado
+- **Error Handling** sanitizado en producción (sin stack traces a clientes)
+- **Auditoría SOC** - Todas las operaciones registradas
+
+---
+
+## 📊 Flujo de Negocio
+
+### **1. Homebanking (Cliente)**
 ```
-1. Abre http://localhost:5173
-   └── Ves la landing page pública de BancoConfianza
+CLIENTE accede a:
+  ├─ Dashboard: Saldo, cuentas, créditos activos
+  ├─ Transferencias: Entre cuentas propias, a terceros
+  ├─ Solicitar Crédito: 4 productos (PERSONAL, VEHICULAR, HIPOTECARIO, MICROEMPRESA)
+  └─ Estado de Cuenta: Movimientos, cuotas, mora
+```
 
-2. Clic en "Banca en Línea" o "Ingresar a mi cuenta"
-   └── Te lleva al formulario de login
+### **2. Core Crediticio (ASESOR → JEFE_REGIONAL → RIESGOS/COMITE)**
+```
+ASESOR:
+  ├─ Recibe solicitud del cliente (score automático: 300-850)
+  ├─ Calcula RDS (Ratio Deuda-Servicio) → Semáforo: VERDE/AMARILLO/ROJO
+  └─ Aprueba (score ≥ 700 + RDS ≤ 50%) o rechaza
 
-3. Ingresa credenciales de un usuario registrado en Supabase Auth
-   └── El SDK de Supabase autentica y devuelve un JWT
+JEFE_REGIONAL:
+  ├─ Revisa créditos HIPOTECARIOS y montos altos (>S/50,000)
+  └─ Aprueba o rechaza (genera desembolso automático si ≤S/50,000)
 
-4. El JWT se guarda en localStorage y se envía al backend
-   └── El backend valida la firma RS256 con las claves JWKS de Supabase
+RIESGOS/COMITE:
+  ├─ Dictamen para créditos complejos (RDS AMARILLO, montos >S/150,000)
+  └─ Aprobación final o rechazo
+```
 
-5. Accedes al Dashboard privado
-   └── Ves tus cuentas, saldos y movimientos
-
-6. Clic en "Cerrar sesión"
-   └── Se limpia la sesión en Supabase y en localStorage
-   └── Vuelves a la landing page
-
-7. Si intentas ir a /dashboard sin sesión
-   └── ProtectedRoute te redirige al login automáticamente
+### **3. Recuperaciones R2 (JEFE_REGIONAL → GESTOR RIESGOS)**
+```
+Sistema detecta mora:
+  ├─ PREVENTIVA   (1-30 días)   → Llamada, SMS
+  ├─ TEMPRANA     (31-60 días)  → Visita, Carta
+  ├─ TARDÍA       (61-120 días) → Carta Notarial
+  ├─ JUDICIAL     (121-180 días)→ Derivación legal
+  └─ CASTIGO      (>180 días)   → Castigo contable
 ```
 
 ---
 
-## Crear usuario de prueba
+## 📱 Acceso por Rol
 
-Desde el **Supabase Dashboard → Authentication → Users → Add user → Create new user**:
+Ver archivo **`CREDENCIALES_PRUEBA.md`** para usuarios de prueba con credenciales.
 
-| Campo | Valor |
-|---|---|
-| Email | demo@bancoconfianza.pe |
-| Password | 123456 |
-
-O usa cualquier email/password válido — Supabase Auth lo gestiona.
-
----
-
-## Endpoints del backend
-
-| Método | Ruta | Auth | Descripción |
-|---|---|---|---|
-| GET | `/api/public/health` | No | Estado del servidor |
-| GET | `/actuator/health` | No | Health check de Spring |
-| GET | `/api/cuentas` | JWT | Cuentas del usuario |
-| GET | `/api/cuentas/{id}/movimientos` | JWT | Últimos movimientos |
-| POST | `/api/cuentas/transferir` | JWT | Transferencia entre cuentas |
-| POST | `/api/cuentas/prueba` | JWT | Crear cuenta de prueba |
+Roles disponibles:
+- **CLIENTE**: Homebanking + solicitud crédito
+- **ASESOR**: Evaluación créditos, colocaciones
+- **JEFE_REGIONAL**: Aprobación créditos altos, gestión regional
+- **RIESGOS**: Análisis crediticio, scores, RDS
+- **COMITE**: Aprobación créditos complejos
+- **GERENCIA**: KPIs, reportes, auditoría
+- **ADMIN**: Gestión usuarios, configuración sistema
 
 ---
 
-## Tecnologías utilizadas
+## 💾 Base de Datos
 
-### Frontend
-| Tecnología | Versión | Uso |
-|---|---|---|
-| React | 19 | Framework UI |
-| Vite | 8 | Bundler y dev server |
-| Tailwind CSS | 4 | Estilos utilitarios |
-| React Router | 7 | Navegación SPA |
-| Axios | 1.x | Llamadas HTTP al backend |
-| Supabase JS | 2.x | Autenticación con Supabase Auth |
-| Lucide React | 1.x | Iconos |
+### **Tablas Principales**
+- `usuarios` - Todos los usuarios del sistema
+- `cuentas` - Cuentas bancarias (ahorros, corriente)
+- `creditos` - Solicitudes y créditos desembolsados
+- `cuotas_credito` - Cronograma de pagos (1000+ cuotas de prueba)
+- `movimientos` - Transferencias, depósitos, pagos (1000+ registros)
+- `gestiones_cobranza` - Historial de recuperación R2
+- `auditoria_eventos` - Trazabilidad completa SOC
 
-### Backend
-| Tecnología | Versión | Uso |
-|---|---|---|
-| Java | 21 | Lenguaje |
-| Spring Boot | 3.3 | Framework principal |
-| Spring Security | 6.x | Seguridad y filtros JWT |
-| Spring Data JPA | 3.x | Acceso a datos |
-| JJWT | 0.12.5 | Parseo y validación de JWT |
-| H2 | 2.x | Base de datos en memoria (dev) |
-| PostgreSQL | 42.x | Driver para Supabase (prod) |
-| Spring Actuator | 3.x | Health checks |
-
-### Infraestructura
-| Servicio | Uso |
-|---|---|
-| Supabase Auth | Autenticación de usuarios (JWT RS256) |
-| Supabase PostgreSQL | Base de datos en producción |
+### **Conexión PostgreSQL**
+```yaml
+# application.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bancoconfianza
+    username: postgres
+    password: YOUR_PASSWORD
+```
 
 ---
 
-## Características implementadas
+## 🧪 Datos de Prueba
 
-- **Página pública** — Landing page con información de la financiera, productos, testimonios y noticias
-- **Autenticación** — Login/logout con Supabase Auth, tokens JWT RS256
-- **Rutas protegidas** — `ProtectedRoute` redirige al login si no hay sesión
-- **Navbar inteligente** — Muestra avatar y menú de usuario cuando hay sesión activa
-- **Dashboard privado** — Panel con cuentas, saldos, movimientos y acciones rápidas
-- **Tema claro/oscuro** — Toggle persistente en localStorage
-- **Widget de estado** — Indicador flotante que monitorea la conexión con el backend cada 30 segundos, con toast de 5 minutos al detectar cambios
-- **Páginas adicionales** — Productos, Nosotros, Simulador de crédito, Contacto
-- **CORS configurado** — Backend acepta peticiones desde `localhost:5173`
-- **Manejo de errores** — `GlobalExceptionHandler` con respuestas consistentes
+Sistema incluye:
+- **15 usuarios** con acceso inmediato (ver `CREDENCIALES_PRUEBA.md`)
+- **9 cuentas bancarias** con saldos reales
+- **7 créditos** en todos los estados (EN_EVALUACION, APROBADO, DESEMBOLSADO, RECHAZADO)
+- **5 créditos en mora** mostrando todas las bandas de recuperación
+- **1000+ cuotas** con cronograma completo
+- **1000+ movimientos** para análisis
 
----
-
-## Notas de desarrollo
-
-- El backend usa **H2 en memoria** por defecto. Los datos se pierden al reiniciar. Para persistencia, configura las variables de entorno de Supabase PostgreSQL.
-- El `DataInitializer` crea automáticamente un usuario demo si la tabla está vacía.
-- La consola H2 está disponible en `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:homebanking`, usuario: `sa`, sin contraseña).
-- El widget de estado del backend usa `GET /api/public/health` como endpoint principal y `GET /actuator/health` como fallback.
+Se cargan automáticamente al iniciar el backend (ver `DataInitializer.java`).
 
 ---
 
-## Auditoría
+## 📈 Power BI
 
-**Desarrollado por:** Angel Addair Jeremias Avellaneda  
-**Institución:** BancoConfianza S.A.  
-**Supervisado por:** Superintendencia de Banca, Seguros y AFP del Perú (SBS)  
-**Versión:** 1.0.0  
-**Fecha de entrega:** Mayo 2026
+Estructura preparada para dashboards:
+
+```sql
+-- Colocaciones por mes
+SELECT DATE_TRUNC('month', fecha_desembolso), COUNT(*), SUM(monto)
+FROM creditos
+WHERE estado = 'DESEMBOLSADO'
+GROUP BY DATE_TRUNC('month', fecha_desembolso);
+
+-- Tasa de mora por banda
+SELECT rango_dias_mora, COUNT(*), ROUND(100.0 * COUNT(*) / total, 2) as pct_mora
+FROM (SELECT *, (SELECT COUNT(*) FROM cuotas_credito WHERE estado_cuota = 'VENCIDA') as total)
+GROUP BY rango_dias_mora;
+
+-- Productividad por asesor
+SELECT usuario_id, COUNT(*) as colocaciones, SUM(monto) as volumen
+FROM creditos
+WHERE estado IN ('APROBADO', 'DESEMBOLSADO') AND asesor_id IS NOT NULL
+GROUP BY usuario_id
+ORDER BY COUNT(*) DESC;
+```
+
+---
+
+## 🔄 API Endpoints
+
+### **Autenticación**
+- `POST /api/auth/login` - Login usuario (email + password)
+- `GET /api/auth/me` - Datos usuario autenticado
+- `GET /api/auth/usuarios` - Lista usuarios (ADMIN)
+
+### **Créditos**
+- `POST /api/creditos/solicitar` - Cliente solicita crédito
+- `GET /api/creditos/pendientes` - Créditos sin resolver (ASESOR, JEFE_REGIONAL)
+- `POST /api/creditos/resolver` - Asesor/Jefe aprueba o rechaza
+- `GET /api/creditos/mis-solicitudes` - Créditos del cliente autenticado
+
+### **Cuentas & Movimientos**
+- `GET /api/cuentas` - Lista cuentas usuario
+- `GET /api/cuentas/{id}/movimientos` - Historial de cuenta
+- `POST /api/cuentas/transferencia` - Nueva transferencia
+
+### **Recuperaciones**
+- `GET /api/cartera-morosa` - Estado mora por banda
+- `POST /api/recuperaciones/gestionar` - Registrar gestión de cobranza
+
+### **Auditoría**
+- `GET /api/auditoria` - Eventos auditoría (admin)
+
+---
+
+## 🛠️ Configuración Producción
+
+### **1. Variables de Entorno**
+```bash
+# Backend
+SPRING_DATASOURCE_URL=jdbc:postgresql://prod-db:5432/bancoconfianza
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=***VAULT***
+JWT_SECRET=***VAULT***
+
+# Frontend
+VITE_API_BASE_URL=https://api.bancoconfianza.pe
+```
+
+### **2. Seguridad**
+- ✅ JWT secret en vault
+- ✅ CORS restringido a dominio oficial
+- ✅ `/actuator/**` protegido (solo ADMIN)
+- ✅ `/api/public/health` sin información sensible
+- ✅ Demo data y test users removidos
+- ✅ Console logs sanitizados
+
+### **3. Build**
+```bash
+# Backend JAR
+./mvnw clean package -DskipTests
+
+# Frontend build
+npm run build  # → dist/
+```
+
+---
+
+## 📞 Soporte
+
+Para problemas técnicos, revisar:
+1. `backend/logs/` - Logs del servidor
+2. Browser DevTools → Network/Console → Errores API
+3. PostgreSQL logs si hay problemas de base de datos
+4. Auditoría: `GET /api/auditoria` para trazabilidad
+
+---
+
+## 📄 Licencia
+
+Proyecto educativo - BCP 2026
+
+---
+
+## 🎯 Próximas Mejoras (Roadmap)
+
+- [ ] Notificaciones por email/SMS
+- [ ] Two-Factor Authentication (2FA)
+- [ ] Apple/Google Pay integration
+- [ ] Machine learning para scoring dinámico
+- [ ] Blockchain para auditoría inmutable
+- [ ] Mobile app (iOS/Android)
+
+---
+
+**¿Listo para comenzar?** Ver `CREDENCIALES_PRUEBA.md` para acceder como ADMIN, ASESOR, CLIENTE, etc.

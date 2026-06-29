@@ -2,6 +2,7 @@ D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\config\DataInitializer.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\config\JwtProperties.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\config\SecurityConfig.java
+D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\AperturaCuentaController.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\AuditoriaController.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\AuthController.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\CreditoController.java
@@ -10,6 +11,7 @@ D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\EstadisticasController.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\HealthController.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\controller\RecuperacionesController.java
+D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\AperturaCuentaRequest.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\AuthResponse.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\CreditoDto.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\CuentaDto.java
@@ -19,8 +21,10 @@ D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\MovimientoDto.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\RegisterRequest.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\ResolucionCreditoRequest.java
+D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\SimulacionCreditoDto.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\SolicitudCreditoRequest.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\TransferenciaRequest.java
+D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\dto\ValidacionTarjetaRequest.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\exception\GlobalExceptionHandler.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\HomeBankingApplication.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\model\AuditoriaEvento.java
@@ -40,6 +44,7 @@ D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\security\JwtAuthFilter.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\security\JwtService.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\security\SupabaseUserDetails.java
+D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\service\AperturaCuentaService.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\service\AuditoriaService.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\service\AuthService.java
 D:\Dev\Programacion\DesarrolloWeb\ProyectosFullStack\banco\backend\src\main\java\pe\bancoconfianza\backend\service\CreditoService.java

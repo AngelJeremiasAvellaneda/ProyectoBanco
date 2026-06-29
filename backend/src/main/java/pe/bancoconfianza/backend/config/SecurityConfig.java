@@ -55,12 +55,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Preflight CORS — debe ser lo primero
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                // Public endpoints
+                // Public endpoints (no actuator — solo admin)
                 .requestMatchers(
                     "/api/auth/**",
                     "/api/dev/**",
                     "/api/public/**",
-                    "/actuator/health"
+                    "/api/apertura-cuenta/**"
                 ).permitAll()
                 // Everything else requires authentication
                 .anyRequest().authenticated()

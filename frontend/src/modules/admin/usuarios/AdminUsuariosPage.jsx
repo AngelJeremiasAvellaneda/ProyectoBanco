@@ -27,7 +27,9 @@ export default function AdminUsuariosPage() {
   const [loading,   setLoading]   = useState(true);
   const [busqueda,  setBusqueda]  = useState('');
   const [filtroRol, setFiltroRol] = useState('TODOS');
-  const [saving,    setSaving]    = useState(null); // id guardando
+  const [saving,    setSaving]    = useState(null);
+  const [page,      setPage]      = useState(0);
+  const [size,      setSize]      = useState(20);
 
   const pageBg = dark ? '#0D1117' : '#f0f4ff';
   const cardBg = dark ? '#1A1F27' : '#ffffff';
@@ -82,6 +84,12 @@ export default function AdminUsuariosPage() {
     const matchRol = filtroRol === 'TODOS' || u.rol === filtroRol;
     return matchBusq && matchRol;
   });
+
+  // Paginación LOCAL
+  const totalPages = Math.ceil(usuariosFiltrados.length / size);
+  const inicio = page * size;
+  const fin = Math.min(inicio + size, usuariosFiltrados.length);
+  const usuariosPagina = usuariosFiltrados.slice(inicio, fin);
 
   // Stats
   const stats = ROLES.reduce((acc, r) => {
@@ -150,74 +158,102 @@ export default function AdminUsuariosPage() {
 
         {/* Tabla */}
         <div className="rounded-2xl border overflow-hidden" style={{ background: cardBg, borderColor: border }}>
-          <div className="px-5 py-3 border-b" style={{ borderColor: border }}>
+          <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: border }}>
             <p className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: textM }}>
               <Users size={13} /> {usuariosFiltrados.length} usuario(s)
             </p>
+            <select value={size} onChange={e => { setSize(Number(e.target.value)); setPage(0); }}
+              className="text-xs border rounded-lg px-2 py-1 outline-none"
+              style={{ borderColor: border, background: dark ? '#0D1117' : '#f9fafb', color: textH }}>
+              <option value={10}>10 por página</option>
+              <option value={20}>20 por página</option>
+              <option value={50}>50 por página</option>
+              <option value={100}>100 por página</option>
+            </select>
           </div>
           {loading ? (
             <div className="p-10 text-center">
               <RefreshCw size={24} className="animate-spin mx-auto" style={{ color: '#0052FF' }} />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr style={{ borderBottom: `1px solid ${border}` }}>
-                    {['ID', 'Nombre', 'Email', 'Rol', 'Estado', 'Creado', 'Acciones'].map(h => (
-                      <th key={h} className="px-4 py-3 text-left font-bold uppercase tracking-wide" style={{ color: textM }}>
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {usuariosFiltrados.map(u => (
-                    <tr key={u.id} style={{ borderBottom: `1px solid ${border}` }}
-                      className="transition-colors">
-                      <td className="px-4 py-3 font-mono" style={{ color: textM }}>#{u.id}</td>
-                      <td className="px-4 py-3 font-semibold" style={{ color: textH }}>{u.nombre}</td>
-                      <td className="px-4 py-3" style={{ color: textM }}>{u.email}</td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={u.rol}
-                          onChange={e => handleRol(u.id, e.target.value)}
-                          disabled={saving === u.id}
-                          className="rounded-lg px-2 py-1 text-xs border outline-none font-bold"
-                          style={{
-                            borderColor: ROL_COLOR[u.rol] + '50',
-                            background: ROL_COLOR[u.rol] + '12',
-                            color: ROL_COLOR[u.rol],
-                            cursor: 'pointer',
-                          }}>
-                          {ROLES.map(r => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleActivo(u.id, u.activo)}
-                          disabled={saving === u.id}
-                          className="flex items-center gap-1 text-xs font-bold"
-                          style={{ color: u.activo ? '#059669' : '#EF4444' }}>
-                          {u.activo
-                            ? <><ToggleRight size={16} /> Activo</>
-                            : <><ToggleLeft size={16} /> Inactivo</>
-                          }
-                        </button>
-                      </td>
-                      <td className="px-4 py-3" style={{ color: textM }}>
-                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-PE') : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {saving === u.id && (
-                          <RefreshCw size={13} className="animate-spin" style={{ color: '#0052FF' }} />
-                        )}
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${border}` }}>
+                      {['ID', 'Nombre', 'Email', 'Rol', 'Estado', 'Creado', 'Acciones'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left font-bold uppercase tracking-wide" style={{ color: textM }}>
+                          {h}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {usuariosPagina.map(u => (
+                      <tr key={u.id} style={{ borderBottom: `1px solid ${border}` }}
+                        className="transition-colors">
+                        <td className="px-4 py-3 font-mono" style={{ color: textM }}>#{u.id}</td>
+                        <td className="px-4 py-3 font-semibold" style={{ color: textH }}>{u.nombre}</td>
+                        <td className="px-4 py-3" style={{ color: textM }}>{u.email}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={u.rol}
+                            onChange={e => handleRol(u.id, e.target.value)}
+                            disabled={saving === u.id}
+                            className="rounded-lg px-2 py-1 text-xs border outline-none font-bold"
+                            style={{
+                              borderColor: ROL_COLOR[u.rol] + '50',
+                              background: ROL_COLOR[u.rol] + '12',
+                              color: ROL_COLOR[u.rol],
+                              cursor: 'pointer',
+                            }}>
+                            {ROLES.map(r => <option key={r} value={r}>{r.replace('_', ' ')}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleToggleActivo(u.id, u.activo)}
+                            disabled={saving === u.id}
+                            className="flex items-center gap-1 text-xs font-bold"
+                            style={{ color: u.activo ? '#059669' : '#EF4444' }}>
+                            {u.activo
+                              ? <><ToggleRight size={16} /> Activo</>
+                              : <><ToggleLeft size={16} /> Inactivo</>
+                            }
+                          </button>
+                        </td>
+                        <td className="px-4 py-3" style={{ color: textM }}>
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-PE') : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {saving === u.id && (
+                            <RefreshCw size={13} className="animate-spin" style={{ color: '#0052FF' }} />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Controles de paginación */}
+              <div className="px-5 py-3 border-t flex items-center justify-between" style={{ borderColor: border }}>
+                <p className="text-xs" style={{ color: textM }}>
+                  Página {page + 1} de {Math.max(1, totalPages)} | Mostrando {usuariosPagina.length} de {usuariosFiltrados.length}
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}
+                    className="px-3 py-1 rounded-lg border text-xs font-bold disabled:opacity-50"
+                    style={{ borderColor: border, color: '#0052FF' }}>
+                    ← Anterior
+                  </button>
+                  <button onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1 || totalPages === 0}
+                    className="px-3 py-1 rounded-lg border text-xs font-bold disabled:opacity-50"
+                    style={{ borderColor: border, color: '#0052FF' }}>
+                    Siguiente →
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -37,6 +37,14 @@ public class CreditoController {
 
     /* ── Homebanking ── */
 
+    @PostMapping("/simular")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<SimulacionCreditoDto> simular(
+            @Valid @RequestBody SolicitudCreditoRequest req,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(creditoService.simularCredito(req, userDetails.getUsername()));
+    }
+
     @PostMapping("/solicitar")
     @PreAuthorize("hasRole('CLIENTE')")
     public ResponseEntity<CreditoDto> solicitar(

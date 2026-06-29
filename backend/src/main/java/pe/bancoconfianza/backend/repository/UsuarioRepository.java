@@ -13,6 +13,12 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String email);
     boolean existsByEmail(String email);
     
+    Optional<Usuario> findByNumeroTarjeta(String numeroTarjeta);
+    Optional<Usuario> findByNumeroTarjetaAndDni(String numeroTarjeta, String dni);
+    Optional<Usuario> findByDni(String dni);
+    boolean existsByDni(String dni);
+    boolean existsByNumeroTarjeta(String numeroTarjeta);
+    
     @Modifying
     @Transactional
     @Query(value = "UPDATE usuarios SET password = :password WHERE email = :email", nativeQuery = true)

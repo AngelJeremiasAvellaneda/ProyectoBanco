@@ -198,14 +198,6 @@ export default function AuditoriaPage() {
         matrix[dia][hora]++;
       } catch {}
     });
-    if (eventos.length === 0) {
-      // demo
-      const demo = Array.from({ length: 7 }, () => Array(24).fill(0));
-      for (let d = 0; d < 5; d++) {
-        for (let h = 8; h <= 18; h++) demo[d][h] = Math.floor(Math.random() * 50 + 5);
-      }
-      return demo;
-    }
     return matrix;
   }, [eventos]);
   const heatMax = Math.max(...heatmapData.flat(), 1);
@@ -231,10 +223,7 @@ export default function AuditoriaPage() {
       .map(([dia, logins]) => ({ dia, logins }));
 
     if (entries.length === 0) {
-      return Array.from({ length: 14 }, (_, i) => ({
-        dia: `${String(i + 1).padStart(2,'0')}/06`,
-        logins: Math.floor(Math.random() * 25 + 8),
-      }));
+      return [];
     }
     return entries;
   }, [eventos]);
@@ -252,13 +241,7 @@ export default function AuditoriaPage() {
       .slice(0, 8);
 
     if (data.length === 0) {
-      return [
-        { modulo: 'CRÉDITO',  count: 284, color: '#0052FF' },
-        { modulo: 'AUTH',     count: 196, color: '#7c3aed' },
-        { modulo: 'CUENTA',   count: 148, color: '#059669' },
-        { modulo: 'COBRANZA', count: 84,  color: '#EF4444' },
-        { modulo: 'USUARIO',  count: 36,  color: '#F47920' },
-      ];
+      return [];
     }
     return data;
   }, [filtrados]);
@@ -294,7 +277,7 @@ export default function AuditoriaPage() {
               <h1 className="text-xl font-black" style={{ color: textH }}>
                 Centro de Auditoría — SOC View
               </h1>
-              <p className="text-xs" style={{ color: textM }}>
+              <p className="text-xs mt-0.5" style={{ color: textM }}>
                 Monitoreo de seguridad · {eventos.length} eventos registrados
               </p>
             </div>
@@ -315,10 +298,10 @@ export default function AuditoriaPage() {
 
         {/* ── KPI Cards mini ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiMini label="Eventos totales"    value={eventos.length || 748}    color="#0052FF" icon={Activity} />
-          <KpiMini label="Usuarios únicos"    value={usuariosUnicos || 38}     color="#7c3aed" icon={Users}    />
-          <KpiMini label="Acciones críticas"  value={accionesCrits || 14}      color="#EF4444" icon={AlertTriangle} />
-          <KpiMini label="Eventos hoy"        value={eventosHoy.length || 284} color="#059669" icon={Clock}    />
+          <KpiMini label="Eventos totales"    value={eventos.length}    color="#0052FF" icon={Activity} />
+          <KpiMini label="Usuarios únicos"    value={usuariosUnicos}     color="#7c3aed" icon={Users}    />
+          <KpiMini label="Acciones críticas"  value={accionesCrits}      color="#EF4444" icon={AlertTriangle} />
+          <KpiMini label="Eventos hoy"        value={eventosHoy.length} color="#059669" icon={Clock}    />
         </div>
 
         {/* ── Heatmap actividad ── */}

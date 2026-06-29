@@ -18,7 +18,7 @@ public record CuentaDto(
         return new CuentaDto(
                 c.getId(),
                 c.getNumeroCuenta(),
-                c.getTipo().name(),
+                c.getTipoCuenta().name(),
                 c.getSaldo(),
                 c.getMoneda(),
                 c.isActiva(),

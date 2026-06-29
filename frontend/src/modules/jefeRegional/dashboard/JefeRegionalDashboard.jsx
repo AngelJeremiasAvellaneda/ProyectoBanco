@@ -31,19 +31,7 @@ import { getSaludo, formatSoles } from '../../../shared/utils/formatters';
 import { ROL_LABELS } from '../../../shared/constants/roles';
 import Breadcrumb from '../../../shared/components/Breadcrumb';
 
-/* ── seed datos regionales demo ─────────────────── */
-const MESES_C = ['E','F','M','A','M','J','J','A','S','O','N','D'];
-const SEED_COL  = [8, 11, 9, 14, 16, 13, 18, 17, 20, 22, 19, 25];
-const SEED_META = [10,10,10,12,12,12,14,14,15,15,16,16];
-
-/* seed asesores del equipo */
-const SEED_ASESORES = [
-  { nombre: 'Carlos Ramírez',  coloc: 22, meta: 18, mora: 3.2, color: '#059669' },
-  { nombre: 'Ana Mendoza',     coloc: 19, meta: 18, mora: 4.1, color: '#0052FF' },
-  { nombre: 'Luis Torres',     coloc: 16, meta: 18, mora: 5.8, color: '#7c3aed' },
-  { nombre: 'María Castro',    coloc: 14, meta: 18, mora: 6.2, color: '#F59E0B' },
-  { nombre: 'Pedro Vargas',    coloc: 11, meta: 18, mora: 8.4, color: '#F97316' },
-];
+// Demo data removed for production
 
 /* ── KPI Card gradient ─────────────────────────── */
 function KpiCard({ label, value, sub, icon: Icon, gradient, alert }) {
@@ -138,15 +126,18 @@ export default function JefeRegionalDashboard() {
     .reduce((a, c) => a + Number(c.montoSolicitado ?? 0), 0);
 
   /* ── tendencia mensual ───────────────── */
-  const mesData = useMemo(() => MESES_C.map((mes, i) => ({
-    mes,
-    colocaciones: SEED_COL[i] + Math.min(desembolsados.length, 2),
-    meta:         SEED_META[i],
-  })), [desembolsados.length]);
+  const mesData = useMemo(() => {
+    const MESES = ['E','F','M','A','M','J','J','A','S','O','N','D'];
+    const mesActual = new Date().getMonth();
+    return MESES.map((mes, i) => ({
+      mes,
+      colocaciones: i <= mesActual ? desembolsados.length : 0,
+      meta: 14,
+    }));
+  }, [desembolsados.length]);
 
   /* ── asesores con datos reales si existen ── */
   const asesoresData = useMemo(() => {
-    /* intenta agrupar por clienteEmail/gestor; si no, usa seed */
     const grupos = {};
     solicitudes.forEach(s => {
       const key = s.asesorNombre ?? s.clienteNombre?.split(' ')[0] ?? 'Asesor';
@@ -156,7 +147,7 @@ export default function JefeRegionalDashboard() {
         grupos[key].monto += Number(s.montoSolicitado ?? 0);
       }
     });
-    const real = Object.entries(grupos)
+    return Object.entries(grupos)
       .map(([nombre, d], i) => ({
         nombre,
         coloc: d.coloc,
@@ -166,8 +157,6 @@ export default function JefeRegionalDashboard() {
       }))
       .sort((a, b) => b.coloc - a.coloc)
       .slice(0, 5);
-
-    return real.length >= 2 ? real : SEED_ASESORES;
   }, [solicitudes]);
 
   /* ── icono de ranking ─────────────────── */
@@ -226,8 +215,8 @@ export default function JefeRegionalDashboard() {
             label="Colocaciones regionales"
             value={desembolsados.length > 0
               ? formatSoles(carteraRegional)
-              : `S/ ${(SEED_COL[new Date().getMonth()] * 28_000).toLocaleString('es-PE')}`}
-            sub={`${desembolsados.length || SEED_COL[new Date().getMonth()]} créditos desembolsados`}
+              : 'S/ 0'}
+            sub={`${desembolsados.length} créditos desembolsados`}
             icon={Banknote}
             gradient="linear-gradient(135deg,#0052FF,#003087)"
           />
@@ -250,7 +239,7 @@ export default function JefeRegionalDashboard() {
           />
           <KpiCard
             label="Cumplimiento meta"
-            value={`${pctMeta || Math.round((SEED_COL[new Date().getMonth()] / SEED_META[new Date().getMonth()]) * 100)}%`}
+            value={`${pctMeta}%`}
             sub={`Meta: ${metaMensual} créditos/mes`}
             icon={Target}
             gradient={pctMeta >= 80
@@ -267,13 +256,13 @@ export default function JefeRegionalDashboard() {
             </p>
             <p className="text-xs font-black"
               style={{ color: pctMeta >= 80 ? '#059669' : pctMeta >= 50 ? '#F59E0B' : '#EF4444' }}>
-              {desembolsados.length || SEED_COL[new Date().getMonth()]} / {metaMensual} créditos
+              {desembolsados.length} / {metaMensual} créditos
             </p>
           </div>
           <div className="w-full h-3 rounded-full overflow-hidden" style={{ background: dark ? '#0D1117' : '#e2e8f0' }}>
             <div className="h-full rounded-full transition-all duration-1000"
               style={{
-                width: `${pctMeta || Math.round((SEED_COL[new Date().getMonth()] / SEED_META[new Date().getMonth()]) * 100)}%`,
+                width: `${pctMeta}%`,
                 background: pctMeta >= 80
                   ? 'linear-gradient(90deg,#059669,#10b981)'
                   : pctMeta >= 50

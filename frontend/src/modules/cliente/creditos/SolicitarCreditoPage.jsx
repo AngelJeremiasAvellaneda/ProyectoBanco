@@ -5,8 +5,8 @@ import { useAuth } from '../../../context/AuthContext';
 import { apiClient } from '../../../services/authService';
 import { solicitarCredito } from '../../../services/creditoService';
 import {
-  CreditCard, DollarSign, Calendar, AlertTriangle, CheckCircle,
-  ArrowLeft, Info, TrendingUp, BarChart3
+  CreditCard, DollarSign, Calendar, AlertTriangle, CheckCircle, Clock,
+  ArrowLeft, Info, TrendingUp, BarChart3, X, Loader, Eye
 } from 'lucide-react';
 
 const PRODUCTOS = [
@@ -61,7 +61,12 @@ export default function SolicitarCreditoPage() {
   });
 
   useEffect(() => {
-    apiClient.get('/cuentas').then(r => setCuentas(r.data)).catch(() => {});
+    apiClient.get('/cuentas')
+      .then(r => setCuentas(r.data))
+      .catch(err => {
+        console.error('Error al cargar cuentas:', err);
+        setError('No se pudieron cargar tus cuentas. Intenta más tarde.');
+      });
   }, []);
 
   const producto = PRODUCTOS.find(p => p.value === form.tipoProducto);
@@ -82,7 +87,23 @@ export default function SolicitarCreditoPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError(''); setResultado(null); setLoading(true);
+    setError(''); 
+    setResultado(null); 
+    setLoading(true);
+
+    // Validaciones previas
+    if (!form.cuentaDesembolsoNumero) {
+      setError('Debes seleccionar una cuenta de desembolso.');
+      setLoading(false);
+      return;
+    }
+
+    if (rds !== null && rds > 50) {
+      setError('Tu capacidad de pago es insuficiente (RDS > 50%). Reduce el monto o plazo.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await solicitarCredito({
         ...form,
@@ -93,7 +114,8 @@ export default function SolicitarCreditoPage() {
       });
       setResultado(res);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al enviar la solicitud.');
+      const mensajeError = err.response?.data?.message || err.response?.data?.error || 'Error al enviar la solicitud.';
+      setError(mensajeError);
     } finally {
       setLoading(false);
     }
@@ -251,18 +273,29 @@ export default function SolicitarCreditoPage() {
           {/* Cuenta de desembolso */}
           <div>
             <label className="text-xs font-bold uppercase tracking-widest mb-1.5 block" style={{ color: textM }}>Cuenta de Desembolso</label>
-            <select required
-              value={form.cuentaDesembolsoNumero}
-              onChange={e => setForm(f => ({ ...f, cuentaDesembolsoNumero: e.target.value }))}
-              className={inputClass()}
-              style={{ background: inputBg, borderColor: border, color: inputCl }}>
-              <option value="">Selecciona una cuenta</option>
-              {cuentas.map(c => (
-                <option key={c.numero_cuenta} value={c.numero_cuenta}>
-                  {c.tipo_cuenta} — {c.numero_cuenta} — S/ {Number(c.saldo).toFixed(2)}
-                </option>
-              ))}
-            </select>
+            {cuentas.length === 0 ? (
+              <div className="p-3 rounded-xl border text-center" style={{ background: inputBg, borderColor: border, color: textM }}>
+                <p className="text-xs mb-2">No tienes cuentas activas. Crea una para continuar.</p>
+                <button type="button"
+                  onClick={() => navigate('/cuentas')}
+                  className="text-xs font-semibold text-blue-600 hover:underline">
+                  Crear cuenta de ahorros
+                </button>
+              </div>
+            ) : (
+              <select required
+                value={form.cuentaDesembolsoNumero}
+                onChange={e => setForm(f => ({ ...f, cuentaDesembolsoNumero: e.target.value }))}
+                className={inputClass()}
+                style={{ background: inputBg, borderColor: form.cuentaDesembolsoNumero ? '#0052FF' : border, color: inputCl }}>
+                <option value="">Selecciona una cuenta</option>
+                {cuentas.map(c => (
+                  <option key={c.numeroCuenta} value={c.numeroCuenta}>
+                    {c.tipo} • {c.numeroCuenta} • S/ {Number(c.saldo).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Propósito */}
@@ -313,9 +346,14 @@ export default function SolicitarCreditoPage() {
             </div>
           )}
 
-          <button type="submit" disabled={loading}
+          <button type="submit" 
+            disabled={loading || !form.cuentaDesembolsoNumero || (rds !== null && rds > 50)}
             className="w-full py-3 rounded-2xl text-white font-bold text-sm transition-all"
-            style={{ background: loading ? '#6b7280' : 'linear-gradient(135deg, #0052FF, #003087)' }}>
+            style={{ 
+              background: loading || !form.cuentaDesembolsoNumero || (rds !== null && rds > 50) ? '#9ca3af' : 'linear-gradient(135deg, #0052FF, #003087)',
+              opacity: loading || !form.cuentaDesembolsoNumero || (rds !== null && rds > 50) ? 0.7 : 1,
+              cursor: loading || !form.cuentaDesembolsoNumero || (rds !== null && rds > 50) ? 'not-allowed' : 'pointer'
+            }}>
             {loading ? 'Evaluando solicitud…' : 'Enviar Solicitud de Crédito'}
           </button>
         </form>

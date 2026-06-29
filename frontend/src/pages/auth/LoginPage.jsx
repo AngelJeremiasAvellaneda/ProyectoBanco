@@ -8,7 +8,7 @@ import {
   ArrowLeft, RefreshCw, Landmark, Mail, KeyRound,
   CheckCircle2, FlaskConical, ChevronRight
 } from 'lucide-react';
-import { login } from '../../services/authService';
+import { login, loginTarjeta } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { BcpLogo } from '../../layouts/components/Navbar.jsx';
@@ -16,146 +16,8 @@ import { BcpLogo } from '../../layouts/components/Navbar.jsx';
 const SESSION_TIMEOUT = 3600;
 const DOC_TYPES = ['DNI', 'CE', 'Pasaporte', 'RUC'];
 
-/* ── Usuarios de prueba — solo en desarrollo ─────────────────
-   ⚠ ELIMINAR antes de producción
-───────────────────────────────────────────── */
-const TEST_USERS = [
-  { email: 'demo@banco.pe',     label: 'Ana García',     rol: 'CLIENTE',       color: '#059669', tag: 'Homebanking' },
-  { email: 'pedro@banco.pe',    label: 'Pedro Sánchez',  rol: 'CLIENTE',       color: '#059669', tag: 'Mora' },
-  { email: 'asesor@banco.pe',   label: 'Carlos Mendoza', rol: 'ASESOR',        color: '#0052FF', tag: 'Core' },
-  { email: 'admin@banco.pe',    label: 'María Torres',   rol: 'ADMIN',         color: '#F59E0B', tag: 'Core' },
-  { email: 'jefe@banco.pe',     label: 'Roberto Castillo',rol: 'JEFE_REG.',    color: '#7c3aed', tag: 'Core' },
-  { email: 'riesgos@banco.pe',  label: 'Laura Fernández',rol: 'RIESGOS',       color: '#EF4444', tag: 'Core' },
-  { email: 'comite@banco.pe',   label: 'Miguel Paredes', rol: 'COMITÉ',        color: '#0052FF', tag: 'Core' },
-  { email: 'gerencia@banco.pe', label: 'Dr. Villanueva', rol: 'GERENCIA',      color: '#F47920', tag: 'Core' },
-];
-const DEV_PASSWORD = '123456';
-
 function TestUsersPanel({ onSelect, dark }) {
-  const [open, setOpen] = useState(false);
-  const bg     = dark ? '#0d1117' : '#f8fafc';
-  const border = dark ? '#f59e0b44' : '#fbbf2444';
-  const cardBg = dark ? '#161b22' : '#fffbeb';
-
-  if (!import.meta.env.DEV) return null;
-
-  return (
-    <div
-      style={{
-        marginBottom: 12,
-        borderRadius: 14,
-        border: `1.5px dashed ${border}`,
-        background: cardBg,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header toggler */}
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '9px 14px',
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
-      >
-        <FlaskConical size={13} style={{ color: '#F59E0B', flexShrink: 0 }} />
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#92400e', flex: 1, letterSpacing: '0.03em' }}>
-          USUARIOS DE PRUEBA — password: {DEV_PASSWORD}
-        </span>
-        <ChevronDown
-          size={13}
-          style={{
-            color: '#92400e',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            flexShrink: 0,
-          }}
-        />
-      </button>
-
-      {/* Grid de usuarios */}
-      {open && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 6,
-            padding: '0 10px 10px',
-          }}
-        >
-          {TEST_USERS.map(u => (
-            <button
-              key={u.email}
-              type="button"
-              onClick={() => {
-                onSelect(u.email, DEV_PASSWORD);
-                setOpen(false);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 7,
-                padding: '7px 9px',
-                borderRadius: 10,
-                border: `1px solid ${dark ? '#ffffff11' : '#e5e7eb'}`,
-                background: dark ? '#1a1f27' : '#ffffff',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'transform 0.1s, box-shadow 0.1s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'scale(1.02)';
-                e.currentTarget.style.boxShadow = `0 0 0 2px ${u.color}44`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {/* Avatar dot */}
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
-                  background: u.color + '22',
-                  border: `1.5px solid ${u.color}55`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  color: u.color,
-                }}
-              >
-                {u.label.charAt(0)}
-              </div>
-              {/* Info */}
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: dark ? '#e6edf3' : '#111827', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {u.label}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: u.color, background: u.color + '18', borderRadius: 4, padding: '1px 5px' }}>
-                    {u.rol}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight size={11} style={{ color: dark ? '#4b5563' : '#9ca3af', flexShrink: 0 }} />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return null;
 }
 
 /* ─────────────────────────────────────────────
@@ -551,14 +413,14 @@ export default function LoginPage() {
   /* ── Submit modo tarjeta ── */
   async function handleSubmitTarjeta(e) {
     e.preventDefault();
-    if (!docNum.trim()) { setError('Ingresa tu número de documento.'); return; }
+    if (!nroTarjeta.trim()) { setError('Ingresa tu número de tarjeta.'); return; }
     if (!clave.trim())  { setError('Ingresa tu clave de Internet.'); return; }
     if (captchaVal.trim().toUpperCase() !== captchaText.toUpperCase()) {
       setError('El código de seguridad no coincide.'); refreshCaptcha(); setCaptchaVal(''); return;
     }
     setCargando(true); setError('');
     try {
-      const data = await login(docNum, clave);
+      const data = await loginTarjeta(nroTarjeta, clave);
       iniciarSesion(data.token, data.user);
       setSuccess('¡Bienvenido! Redirigiendo...');
       const destino = ['ASESOR','ADMIN','JEFE_REGIONAL','RIESGOS','COMITE','GERENCIA'].includes(data.user.rol) ? '/core' : '/dashboard';
@@ -589,12 +451,7 @@ export default function LoginPage() {
 
   /* ── Autocompletar desde panel de prueba ── */
   function handleSelectTestUser(testEmail, testPassword) {
-    setModo('email');
-    setEmail(testEmail);
-    setPassword(testPassword);
-    setError('');
-    setEmailTouched(false);
-    setPassTouched(false);
+    // Removed for production
   }
 
   /* Layout: h-screen overflow-hidden — todo cabe en la pantalla */

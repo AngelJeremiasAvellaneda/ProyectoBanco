@@ -72,6 +72,16 @@ export async function login(email, password) {
   };
 }
 
+// ── Login por tarjeta y clave ─────────────────────────────────────────────
+export async function loginTarjeta(numeroTarjeta, clave) {
+  const res = await apiClient.post('/auth/login-tarjeta', { numeroTarjeta, clave });
+  const { token, nombre, rol, email: correo, id } = res.data;
+  return {
+    token,
+    user: { id, email: correo, name: nombre, rol },
+  };
+}
+
 // ── Helpers de sesión local ────────────────────────────────────────────────
 export function guardarSesion(token, usuario) {
   localStorage.setItem('token', token);

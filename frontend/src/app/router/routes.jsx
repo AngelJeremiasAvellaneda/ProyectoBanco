@@ -24,15 +24,16 @@ import RoleDashboard from '../../modules/shared/RoleDashboard';
 import DashboardRedirect from '../../modules/shared/DashboardRedirect';
 
 /* ── Páginas públicas (lazy) ── */
-const LandingPage    = lazy(() => import('../../pages/public/LandingPage'));
-const LoginPage      = lazy(() => import('../../pages/auth/LoginPage'));
-const ProductosPage  = lazy(() => import('../../pages/public/ProductosPage'));
-const NosotrosPage   = lazy(() => import('../../pages/public/NosotrosPage'));
-const SimuladorPage  = lazy(() => import('../../pages/public/SimuladorPage'));
-const ContactoPage   = lazy(() => import('../../pages/public/ContactoPage'));
-const ComingSoonPage = lazy(() => import('../../shared/components/ComingSoonPage'));
-const NotFoundPage   = lazy(() => import('../../pages/errors/NotFoundPage'));
-const AccesoDenPage  = lazy(() => import('../../pages/errors/AccesoDenegadoPage'));
+const LandingPage       = lazy(() => import('../../pages/public/LandingPage'));
+const LoginPage         = lazy(() => import('../../pages/auth/LoginPage'));
+const ProductosPage     = lazy(() => import('../../pages/public/ProductosPage'));
+const NosotrosPage      = lazy(() => import('../../pages/public/NosotrosPage'));
+const SimuladorPage     = lazy(() => import('../../pages/public/SimuladorPage'));
+const ContactoPage      = lazy(() => import('../../pages/public/ContactoPage'));
+const AperturaCuentaPage = lazy(() => import('../../pages/public/AperturaCuentaPage'));
+const ComingSoonPage    = lazy(() => import('../../shared/components/ComingSoonPage'));
+const NotFoundPage      = lazy(() => import('../../pages/errors/NotFoundPage'));
+const AccesoDenPage     = lazy(() => import('../../pages/errors/AccesoDenegadoPage'));
 
 /* ── Módulo Cliente (lazy) ── */
 const CuentasPage        = lazy(() => import('../../modules/cliente/cuentas/CuentasPage'));
@@ -102,12 +103,14 @@ export default function AppRouter() {
           RUTAS PÚBLICAS — PublicLayout
       ══════════════════════════════════════ */}
       <Route element={<PublicLayout />}>
-        <Route path="/"               element={<Lazy><LandingPage /></Lazy>} />
-        <Route path="/nosotros"       element={<Lazy><NosotrosPage /></Lazy>} />
-        <Route path="/simulador"      element={<Lazy><SimuladorPage /></Lazy>} />
-        <Route path="/contacto"       element={<Lazy><ContactoPage /></Lazy>} />
-        <Route path="/productos"      element={<Lazy><ProductosPage /></Lazy>} />
-        <Route path="/productos/:cat" element={<Lazy><ProductosPage /></Lazy>} />
+        <Route path="/"                    element={<Lazy><LandingPage /></Lazy>} />
+        <Route path="/nosotros"            element={<Lazy><NosotrosPage /></Lazy>} />
+        <Route path="/simulador"           element={<Lazy><SimuladorPage /></Lazy>} />
+        <Route path="/contacto"            element={<Lazy><ContactoPage /></Lazy>} />
+        <Route path="/productos"           element={<Lazy><ProductosPage /></Lazy>} />
+        <Route path="/productos/:cat"      element={<Lazy><ProductosPage /></Lazy>} />
+        <Route path="/abrir-cuenta"        element={<Lazy><AperturaCuentaPage /></Lazy>} />
+        <Route path="/apertura-cuenta"     element={<Lazy><AperturaCuentaPage /></Lazy>} />
       </Route>
 
       {/* Login — solo para guests */}

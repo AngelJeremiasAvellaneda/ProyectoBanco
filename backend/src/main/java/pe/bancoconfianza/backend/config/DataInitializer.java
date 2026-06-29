@@ -433,7 +433,7 @@ public class DataInitializer {
                        Cuenta.TipoCuenta tipo, String saldo, Usuario usuario) {
         Cuenta c = new Cuenta();
         c.setNumeroCuenta(numero);
-        c.setTipo(tipo);
+        c.setTipoCuenta(tipo);
         c.setSaldo(new BigDecimal(saldo));
         c.setMoneda("PEN");
         c.setUsuario(usuario);

@@ -131,17 +131,8 @@ export default function RiesgosDashboard() {
     ];
 
     if (conScore.length === 0) {
-      // datos demo
-      return [
-        { rango: '0-200',   count: 3,  color: '#EF4444' },
-        { rango: '200-400', count: 8,  color: '#F97316' },
-        { rango: '400-500', count: 14, color: '#F59E0B' },
-        { rango: '500-600', count: 22, color: '#fbbf24' },
-        { rango: '600-700', count: 31, color: '#84cc16' },
-        { rango: '700-800', count: 28, color: '#22c55e' },
-        { rango: '800-900', count: 18, color: '#059669' },
-        { rango: '900+',    count: 9,  color: '#047857' },
-      ];
+      // sin datos, retornar vacío
+      return [];
     }
 
     return buckets.map(b => ({
@@ -159,11 +150,7 @@ export default function RiesgosDashboard() {
     const rojo    = conRds.filter(s => s.rdsSemaforo === 'ROJO').length;
     const total   = conRds.length || 1;
     if (conRds.length === 0) {
-      return [
-        { name: 'VERDE',    value: 68, color: '#059669', pct: 68 },
-        { name: 'AMARILLO', value: 22, color: '#F59E0B', pct: 22 },
-        { name: 'ROJO',     value: 10, color: '#EF4444', pct: 10 },
-      ];
+      return [];
     }
     return [
       { name: 'VERDE',    value: verde,    color: '#059669', pct: Math.round(verde/total*100) },
